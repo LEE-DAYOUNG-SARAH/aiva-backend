@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: subscription-service
+  profiles:
+    active: local
+  
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3310/aiva_subscription?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: aiva
+    password: aiva123
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: subscription-scheduler
+    properties:
+      org:
+        quartz:
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            useProperties: false
+            misfireThreshold: 60000
+            tablePrefix: QRTZ_
+            isClustered: true
+
+server:
+  port: 8085
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.aiva: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+payment:
+  toss:
+    client-key: ${TOSS_CLIENT_KEY:test_ck_example}
+    secret-key: ${TOSS_SECRET_KEY:test_sk_example}
+    api-url: https://api.tosspayments.com
+  
+  iamport:
+    api-key: ${IAMPORT_API_KEY:example_api_key}
+    api-secret: ${IAMPORT_API_SECRET:example_api_secret}
+    api-url: https://api.iamport.kr
