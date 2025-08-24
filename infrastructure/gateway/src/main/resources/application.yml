@@ -1,0 +1,125 @@
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: local
+  
+  cloud:
+    gateway:
+      routes:
+        # User Service Routes
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**,/api/children/**,/api/devices/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+        
+        # Chat Service Routes  
+        - id: chat-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/chats/**,/api/messages/**,/api/faqs/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                redis-rate-limiter.requestedTokens: 1
+        
+        # Community Service Routes
+        - id: community-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/posts/**,/api/comments/**,/api/likes/**,/api/reports/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+        
+        # Notification Service Routes
+        - id: notification-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/notifications/**,/api/notification-settings/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+        
+        # Subscription Service Routes
+        - id: subscription-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/subscriptions/**,/api/plans/**,/api/payments/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                redis-rate-limiter.requestedTokens: 1
+      
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.aiva: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+eureka:
+  client:
+    enabled: false  # 로컬 개발 시에는 Eureka 비활성화
+
+jwt:
+  secret: aiva-jwt-secret-key-for-development-only
+  expiration: 86400000
