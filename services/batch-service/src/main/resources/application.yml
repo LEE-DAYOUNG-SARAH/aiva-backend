@@ -1,0 +1,100 @@
+spring:
+  application:
+    name: batch-service
+  profiles:
+    active: local
+
+  # Batch 메타데이터용 H2 DB (Primary)
+  datasource:
+    batch:
+      driver-class-name: org.h2.Driver
+      url: jdbc:h2:mem:batchdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      username: sa
+      password: 
+    # User Service DB (읽기 전용)
+    user:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/aiva_user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      username: aiva
+      password: aiva123
+    # Subscription Service DB (읽기 전용)
+    subscription:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3310/aiva_subscription?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      username: aiva
+      password: aiva123
+    # Notification Service DB (읽기 전용)
+    notification:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3309/aiva_notification?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      username: aiva
+      password: aiva123
+
+  # Spring Batch 설정
+  batch:
+    job:
+      enabled: false  # 자동 실행 비활성화 (스케줄러로 제어)
+    jdbc:
+      initialize-schema: always  # H2 메타데이터 테이블 자동 생성
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: none  # 읽기 전용이므로 DDL 비활성화
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    open-in-view: false
+
+  # Redis 설정 (캐싱용)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8086
+
+# 다른 서비스 API URL 설정
+api:
+  user-service:
+    url: http://localhost:8081
+  subscription-service:
+    url: http://localhost:8085
+  notification-service:
+    url: http://localhost:8084
+
+# 관리 엔드포인트 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,batch
+  endpoint:
+    health:
+      show-details: always
+
+# 로깅 설정
+logging:
+  level:
+    com.aiva.batch: DEBUG
+    org.springframework.batch: INFO
+    org.springframework.scheduling: INFO
+
+# OpenAPI 문서 설정
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Feign 클라이언트 설정
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic

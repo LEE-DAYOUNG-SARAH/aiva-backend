@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스들
+  mysql-user:
+    image: mysql:8.0
+    container_name: aiva-mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: aiva_user
+      MYSQL_USER: aiva
+      MYSQL_PASSWORD: aiva123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+    networks:
+      - aiva-network
+
+  mysql-chat:
+    image: mysql:8.0
+    container_name: aiva-mysql-chat
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: aiva_chat
+      MYSQL_USER: aiva
+      MYSQL_PASSWORD: aiva123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_chat_data:/var/lib/mysql
+    networks:
+      - aiva-network
+
+  mysql-community:
+    image: mysql:8.0
+    container_name: aiva-mysql-community
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: aiva_community
+      MYSQL_USER: aiva
+      MYSQL_PASSWORD: aiva123
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_community_data:/var/lib/mysql
+    networks:
+      - aiva-network
+
+  mysql-notification:
+    image: mysql:8.0
+    container_name: aiva-mysql-notification
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: aiva_notification
+      MYSQL_USER: aiva
+      MYSQL_PASSWORD: aiva123
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_notification_data:/var/lib/mysql
+    networks:
+      - aiva-network
+
+  mysql-subscription:
+    image: mysql:8.0
+    container_name: aiva-mysql-subscription
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: aiva_subscription
+      MYSQL_USER: aiva
+      MYSQL_PASSWORD: aiva123
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_subscription_data:/var/lib/mysql
+    networks:
+      - aiva-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: aiva-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aiva-network
+
+
+
+volumes:
+  mysql_user_data:
+  mysql_chat_data:
+  mysql_community_data:
+  mysql_notification_data:
+  mysql_subscription_data:
+  redis_data:
+
+networks:
+  aiva-network:
+    driver: bridge
