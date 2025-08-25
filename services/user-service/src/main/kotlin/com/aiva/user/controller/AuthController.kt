@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*
 
 /**
  * 인증 관련 API 컨트롤러
- * 모든 인증 로직의 중심 (JWT 발급/갱신/로그아웃)
+ * JWT 토큰 발급, 갱신, 로그아웃
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -20,9 +20,9 @@ class AuthController(
      * 앱에서 OAuth 완료 후 사용자 정보로 로그인 처리
      */
     @PostMapping("/login")
-    fun login(@RequestBody request: AppLoginRequest): ApiResponse<AuthResponse> {
+    fun login(@RequestBody request: AppLoginRequest): ApiResponse<AppLoginResponse> {
         return ApiResponse.success(
-            authService.authenticateFromApp(request)
+            authService.login(request)
         )
     }
     
@@ -45,17 +45,5 @@ class AuthController(
     ): ApiResponse<Unit> {
         authService.logout(authorization)
         return ApiResponse.success()
-    }
-    
-    /**
-     * 현재 사용자 정보 조회
-     */
-    @GetMapping("/me")
-    fun getCurrentUser(
-        @RequestHeader("X-User-Id") userId: String
-    ): ApiResponse<UserInfo> {
-        return ApiResponse.success(
-            authService.getCurrentUserInfo(userId)
-        )
     }
 }

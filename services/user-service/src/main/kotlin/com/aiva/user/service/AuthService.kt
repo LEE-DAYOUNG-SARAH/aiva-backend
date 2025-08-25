@@ -1,18 +1,16 @@
 package com.aiva.user.service
 
-import com.aiva.user.dto.*
-import com.aiva.security.jwt.JwtUtil
-import com.aiva.security.exception.*
-import com.aiva.security.jwt.TokenType
-import com.aiva.user.entity.User
-import com.aiva.user.entity.Provider
-import com.aiva.user.repository.UserRepository
 import com.aiva.common.redis.auth.AuthRedisService
-import org.springframework.beans.factory.annotation.Value
+import com.aiva.security.exception.InvalidTokenException
+import com.aiva.security.exception.UnauthorizedException
+import com.aiva.security.jwt.JwtUtil
+import com.aiva.security.jwt.TokenType
+import com.aiva.user.dto.AppLoginRequest
+import com.aiva.user.dto.AppLoginResponse
+import com.aiva.user.dto.AuthResponse
+import com.aiva.user.dto.UserInfo
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -21,7 +19,9 @@ import java.util.concurrent.TimeUnit
 @Service
 @Transactional
 class AuthService(
-    private val userRepository: UserRepository,
+    private val userCreateService: UserCreateService,
+    private val userReadService: UserReadService,
+    private val childReadService: ChildReadService,
     private val jwtUtil: JwtUtil,
     private val authRedisService: AuthRedisService
 ) {
@@ -29,9 +29,9 @@ class AuthService(
     /**
      * 앱에서 OAuth 완료 후 사용자 정보로 로그인 처리
      */
-    fun authenticateFromApp(request: AppLoginRequest): AuthResponse {
+    fun login(request: AppLoginRequest): AppLoginResponse {
         // 1. 기존 사용자 조회 또는 신규 생성
-        val user = findOrCreateUser(request)
+        val user = userCreateService.findOrCreateUser(request)
 
         // 2. 로그인 시간 업데이트
         user.updateLastLogin()
@@ -46,11 +46,15 @@ class AuthService(
         // 5. 리프레시 토큰 Redis에 저장 (30일)
         authRedisService.setRefreshToken(user.id, refreshToken)
         
-        return AuthResponse(
+        // 6. 자녀 존재 여부 확인
+        val hasChild = childReadService.hasChild(user.id)
+        
+        return AppLoginResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresIn = jwtUtil.getExpirationTime(),
-            user = UserInfo.from(user)
+            user = UserInfo.from(user),
+            hasChild = hasChild
         )
     }
     
@@ -73,7 +77,7 @@ class AuthService(
         }
         
         // 4. 사용자 정보 조회
-        val user = userRepository.findById(userId)
+        val user = userReadService.findById(userId)
             .orElseThrow { UnauthorizedException("사용자를 찾을 수 없습니다") }
         
         // 5. 로그인 시간 업데이트
@@ -111,35 +115,5 @@ class AuthService(
         if (remainingTime > 0) {
             authRedisService.addToBlacklist(accessToken, "logout", remainingTime, TimeUnit.MILLISECONDS)
         }
-    }
-    
-    /**
-     * 현재 사용자 정보 조회
-     */
-    @Transactional(readOnly = true)
-    fun getCurrentUserInfo(userIdString: String): UserInfo {
-        val userId = UUID.fromString(userIdString)
-        val user = userRepository.findById(userId)
-            .orElseThrow { UnauthorizedException("사용자를 찾을 수 없습니다") }
-        
-        return UserInfo.from(user)
-    }
-    
-    /**
-     * 앱에서 받은 사용자 정보로 기존 사용자 조회 또는 신규 생성
-     */
-    private fun findOrCreateUser(appUser: AppLoginRequest): User {
-        val provider = Provider.valueOf(appUser.provider.uppercase())
-        
-        return userRepository.findByProviderAndProviderUserId(provider, appUser.providerUserId)
-            ?: userRepository.save(
-                User(
-                    provider = provider,
-                    providerUserId = appUser.providerUserId,
-                    email = appUser.email,
-                    nickname = appUser.nickname,
-                    avatarUrl = appUser.avatarUrl
-                )
-            )
     }
 }
