@@ -39,6 +39,9 @@ class User(
     @Column(name = "last_login_at")
     var lastLoginAt: LocalDateTime? = null,
 
+    @Column(name = "withdrawal_reason", length = 50)
+    var withdrawalReason: String? = null,
+
     @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
 
@@ -69,6 +72,13 @@ class User(
     fun updateNickname(nickname: String) {
         this.nickname = nickname
     }
+
+    fun withdraw(reason: String) {
+        this.withdrawalReason = reason
+        this.deletedAt = LocalDateTime.now()
+    }
+
+    fun isProUser() = isPro && proExpiresAt?.isAfter(LocalDateTime.now()) == true
 }
 
 enum class Provider {
