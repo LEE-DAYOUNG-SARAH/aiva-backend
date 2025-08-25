@@ -9,7 +9,8 @@ import jakarta.validation.constraints.Size
 import java.time.LocalDate
 import java.util.*
 
-data class ChildCreateRequest(
+// 자녀 정보 생성/수정 동시 사용
+data class ChildRequest(
     @field:NotBlank(message = "출생 타입은 필수입니다")
     @field:Pattern(
         regexp = "^(BORN|DUE|DUE_UNKNOWN)$",
@@ -30,7 +31,7 @@ data class ChildCreateRequest(
     val note: String? = null
 )
 
-data class ChildCreateResponse(
+data class ChildResponse(
     val id: UUID,
     val birthType: BirthType,
     val birthDate: LocalDate?,
@@ -38,7 +39,7 @@ data class ChildCreateResponse(
     val note: String?
 ) {
     companion object {
-        fun from(child: Child) = ChildCreateResponse(
+        fun from(child: Child) = ChildResponse(
             id = child.id,
             birthType = child.birthType,
             birthDate = child.birthDate,

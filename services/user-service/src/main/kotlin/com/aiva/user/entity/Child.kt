@@ -20,17 +20,17 @@ data class Child(
     
     @Column(name = "birth_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    val birthType: BirthType,
+    var birthType: BirthType,
     
     @Column(name = "birth_date")
-    val birthDate: LocalDate? = null,
+    var birthDate: LocalDate? = null,
     
     @Column(name = "gender", length = 10)
     @Enumerated(EnumType.STRING)
-    val gender: Gender,
+    var gender: Gender,
     
     @Column(name = "note", length = 500)
-    val note: String? = null,
+    var note: String? = null,
     
     @CreatedDate
     @Column(name = "created_at", nullable = false)
@@ -39,7 +39,14 @@ data class Child(
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now()
-)
+) {
+    fun update(birthType: BirthType, birthDate: LocalDate?, gender: Gender, note: String?) {
+        this.birthType = birthType
+        this.birthDate = birthDate
+        this.gender = gender
+        this.note = note
+    }
+}
 
 enum class BirthType {
     BORN, DUE, DUE_UNKNOWN

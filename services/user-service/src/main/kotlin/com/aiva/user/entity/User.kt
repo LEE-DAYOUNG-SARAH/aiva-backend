@@ -65,6 +65,10 @@ class User(
     private fun updateAvatarUrl(avatarUrl: String?) {
         this.avatarUrl = avatarUrl
     }
+
+    fun updateNickname(nickname: String) {
+        this.nickname = nickname
+    }
 }
 
 enum class Provider {

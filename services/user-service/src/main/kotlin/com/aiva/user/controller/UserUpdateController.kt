@@ -4,6 +4,8 @@ import com.aiva.user.dto.UserAvatarUpdateRequest
 import com.aiva.user.dto.UserAvatarUpdateResponse
 import com.aiva.user.service.UserUpdateService
 import com.aiva.common.response.ApiResponse
+import com.aiva.user.dto.UserInfoUpdateRequest
+import com.aiva.user.dto.UserInfoUpdateResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
@@ -25,5 +27,13 @@ class UserUpdateController(
         @RequestHeader("X-User-Id") userId: String
     ): ApiResponse<Unit> = ApiResponse.success(
         userUpdateService.deleteAvatarImage(userId)
+    )
+
+    @PutMapping("/me")
+    fun updateUserInfo(
+        @RequestHeader("X-User-Id") userId: String,
+        @Valid @RequestBody request: UserInfoUpdateRequest
+    ): ApiResponse<UserInfoUpdateResponse> = ApiResponse.success(
+        userUpdateService.updateUserInfo(userId, request)
     )
 }

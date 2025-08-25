@@ -15,4 +15,6 @@ interface ChildRepository : JpaRepository<Child, UUID> {
      * 특정 사용자의 자녀가 있는지 확인
      */
     fun existsByUserId(userId: UUID): Boolean
+
+    fun findByUserId(userId: UUID): Child?
 }
