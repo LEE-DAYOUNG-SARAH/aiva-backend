@@ -1,8 +1,11 @@
-package com.aiva.user.controller
+package com.aiva.user.auth.controller
 
-import com.aiva.user.dto.*
-import com.aiva.user.service.AuthService
+import com.aiva.user.auth.service.AuthService
 import com.aiva.common.response.ApiResponse
+import com.aiva.user.auth.dto.AppLoginRequest
+import com.aiva.user.auth.dto.AppLoginResponse
+import com.aiva.user.auth.dto.AuthResponse
+import com.aiva.user.auth.dto.RefreshTokenRequest
 import org.springframework.web.bind.annotation.*
 
 /**

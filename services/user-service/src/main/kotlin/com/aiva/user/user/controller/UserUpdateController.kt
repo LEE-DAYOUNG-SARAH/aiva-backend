@@ -1,11 +1,11 @@
-package com.aiva.user.controller
+package com.aiva.user.user.controller
 
-import com.aiva.user.dto.UserAvatarUpdateRequest
-import com.aiva.user.dto.UserAvatarUpdateResponse
-import com.aiva.user.service.UserUpdateService
+import com.aiva.user.user.dto.UserAvatarUpdateRequest
+import com.aiva.user.user.dto.UserAvatarUpdateResponse
+import com.aiva.user.user.service.UserUpdateService
 import com.aiva.common.response.ApiResponse
-import com.aiva.user.dto.UserInfoUpdateRequest
-import com.aiva.user.dto.UserInfoUpdateResponse
+import com.aiva.user.user.dto.UserInfoUpdateRequest
+import com.aiva.user.user.dto.UserInfoUpdateResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 

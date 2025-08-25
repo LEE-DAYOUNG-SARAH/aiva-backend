@@ -1,10 +1,10 @@
-package com.aiva.user.service
+package com.aiva.user.child.service
 
-import com.aiva.user.dto.ChildRequest
-import com.aiva.user.dto.ChildResponse
-import com.aiva.user.entity.BirthType
-import com.aiva.user.entity.Gender
-import com.aiva.user.repository.ChildRepository
+import com.aiva.user.child.dto.ChildRequest
+import com.aiva.user.child.dto.ChildResponse
+import com.aiva.user.child.entity.BirthType
+import com.aiva.user.child.entity.Gender
+import com.aiva.user.child.repository.ChildRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -15,7 +15,7 @@ class ChildUpdateService(
     private val childRepository: ChildRepository
 ) {
 
-    fun updateChild(userId: UUID, request: ChildRequest):ChildResponse {
+    fun updateChild(userId: UUID, request: ChildRequest): ChildResponse {
         val child = childRepository.findByUserId(userId)
             ?: throw IllegalArgumentException("자녀 정보가 존재하지 않습니다.")
 

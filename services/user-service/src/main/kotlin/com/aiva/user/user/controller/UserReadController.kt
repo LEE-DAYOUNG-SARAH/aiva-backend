@@ -1,7 +1,7 @@
-package com.aiva.user.controller
+package com.aiva.user.user.controller
 
-import com.aiva.user.dto.UserInfo
-import com.aiva.user.service.UserReadService
+import com.aiva.user.auth.dto.UserInfo
+import com.aiva.user.user.service.UserReadService
 import com.aiva.common.response.ApiResponse
 import org.springframework.web.bind.annotation.*
 

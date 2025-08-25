@@ -1,8 +1,8 @@
-package com.aiva.user.dto
+package com.aiva.user.child.dto
 
-import com.aiva.user.entity.BirthType
-import com.aiva.user.entity.Child
-import com.aiva.user.entity.Gender
+import com.aiva.user.child.entity.BirthType
+import com.aiva.user.child.entity.Child
+import com.aiva.user.child.entity.Gender
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size

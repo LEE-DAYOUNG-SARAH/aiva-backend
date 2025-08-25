@@ -1,8 +1,6 @@
-package com.aiva.user.service
+package com.aiva.user.child.service
 
-import com.aiva.user.dto.ChildRequest
-import com.aiva.user.entity.BirthType
-import com.aiva.user.entity.Gender
+import com.aiva.user.child.entity.BirthType
 import java.time.LocalDate
 
 class ChildValidationUtils {

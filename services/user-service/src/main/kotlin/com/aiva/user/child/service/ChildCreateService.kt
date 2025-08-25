@@ -1,11 +1,11 @@
-package com.aiva.user.service
+package com.aiva.user.child.service
 
-import com.aiva.user.dto.ChildRequest
-import com.aiva.user.dto.ChildResponse
-import com.aiva.user.entity.BirthType
-import com.aiva.user.entity.Child
-import com.aiva.user.entity.Gender
-import com.aiva.user.repository.ChildRepository
+import com.aiva.user.child.dto.ChildRequest
+import com.aiva.user.child.dto.ChildResponse
+import com.aiva.user.child.entity.BirthType
+import com.aiva.user.child.entity.Child
+import com.aiva.user.child.entity.Gender
+import com.aiva.user.child.repository.ChildRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*

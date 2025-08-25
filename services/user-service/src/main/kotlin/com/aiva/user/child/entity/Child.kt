@@ -1,4 +1,4 @@
-package com.aiva.user.entity
+package com.aiva.user.child.entity
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
@@ -14,28 +14,28 @@ import java.util.*
 data class Child(
     @Id
     val id: UUID = UUID.randomUUID(),
-    
+
     @Column(name = "user_id", nullable = false, unique = true)
     val userId: UUID,
-    
+
     @Column(name = "birth_type", nullable = false)
     @Enumerated(EnumType.STRING)
     var birthType: BirthType,
-    
+
     @Column(name = "birth_date")
     var birthDate: LocalDate? = null,
-    
+
     @Column(name = "gender", length = 10)
     @Enumerated(EnumType.STRING)
     var gender: Gender,
-    
+
     @Column(name = "note", length = 500)
     var note: String? = null,
-    
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now()

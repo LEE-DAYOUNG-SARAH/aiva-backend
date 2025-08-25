@@ -1,7 +1,7 @@
-package com.aiva.user.service
+package com.aiva.user.user.service
 
-import com.aiva.user.dto.UserInfo
-import com.aiva.user.repository.UserRepository
+import com.aiva.user.auth.dto.UserInfo
+import com.aiva.user.user.repository.UserRepository
 import com.aiva.security.exception.UnauthorizedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

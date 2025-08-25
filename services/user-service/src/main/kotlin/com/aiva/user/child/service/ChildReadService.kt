@@ -1,6 +1,6 @@
-package com.aiva.user.service
+package com.aiva.user.child.service
 
-import com.aiva.user.repository.ChildRepository
+import com.aiva.user.child.repository.ChildRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*

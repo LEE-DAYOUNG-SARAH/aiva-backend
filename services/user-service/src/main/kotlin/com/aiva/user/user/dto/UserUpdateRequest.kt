@@ -1,5 +1,7 @@
-package com.aiva.user.dto
+package com.aiva.user.user.dto
 
+import com.aiva.user.child.dto.ChildRequest
+import com.aiva.user.child.dto.ChildResponse
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 

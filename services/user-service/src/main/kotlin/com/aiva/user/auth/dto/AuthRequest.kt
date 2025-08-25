@@ -1,6 +1,6 @@
-package com.aiva.user.dto
+package com.aiva.user.auth.dto
 
-import com.aiva.user.entity.User
+import com.aiva.user.user.entity.User
 
 /**
  * 인증 관련 Request/Response DTO들

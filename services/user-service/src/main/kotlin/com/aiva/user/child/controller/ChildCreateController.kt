@@ -1,9 +1,9 @@
-package com.aiva.user.controller
+package com.aiva.user.child.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.user.dto.ChildRequest
-import com.aiva.user.service.ChildCreateService
-import com.aiva.user.dto.ChildResponse
+import com.aiva.user.child.dto.ChildRequest
+import com.aiva.user.child.service.ChildCreateService
+import com.aiva.user.child.dto.ChildResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 

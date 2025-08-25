@@ -1,6 +1,6 @@
-package com.aiva.user.repository
+package com.aiva.user.child.repository
 
-import com.aiva.user.entity.Child
+import com.aiva.user.child.entity.Child
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.*

@@ -1,9 +1,9 @@
-package com.aiva.user.service
+package com.aiva.user.user.service
 
-import com.aiva.user.dto.AppLoginRequest
-import com.aiva.user.entity.Provider
-import com.aiva.user.entity.User
-import com.aiva.user.repository.UserRepository
+import com.aiva.user.auth.dto.AppLoginRequest
+import com.aiva.user.user.entity.Provider
+import com.aiva.user.user.entity.User
+import com.aiva.user.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

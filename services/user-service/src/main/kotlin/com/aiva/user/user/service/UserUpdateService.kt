@@ -1,11 +1,12 @@
-package com.aiva.user.service
+package com.aiva.user.user.service
 
-import com.aiva.user.dto.UserAvatarUpdateRequest
-import com.aiva.user.dto.UserAvatarUpdateResponse
-import com.aiva.user.repository.UserRepository
+import com.aiva.user.user.dto.UserAvatarUpdateRequest
+import com.aiva.user.user.dto.UserAvatarUpdateResponse
+import com.aiva.user.user.repository.UserRepository
 import com.aiva.security.exception.UnauthorizedException
-import com.aiva.user.dto.UserInfoUpdateRequest
-import com.aiva.user.dto.UserInfoUpdateResponse
+import com.aiva.user.child.service.ChildUpdateService
+import com.aiva.user.user.dto.UserInfoUpdateRequest
+import com.aiva.user.user.dto.UserInfoUpdateResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
