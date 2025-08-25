@@ -15,7 +15,16 @@ data class AppLoginRequest(
     val avatarUrl: String?          // 프로필 이미지 URL
 )
 
-data class AuthResponse(
+class AppLoginResponse(
+    accessToken: String,
+    refreshToken: String,
+    tokenType: String = "Bearer",
+    expiresIn: Long,            // 초 단위
+    user: UserInfo,
+    val hasChild: Boolean
+): AuthResponse(accessToken, refreshToken, tokenType, expiresIn, user)
+
+open class AuthResponse(
     val accessToken: String,
     val refreshToken: String,
     val tokenType: String = "Bearer",
@@ -40,9 +49,5 @@ data class UserInfo(
 }
 
 data class RefreshTokenRequest(
-    val refreshToken: String
-)
-
-data class LogoutRequest(
     val refreshToken: String
 )

@@ -1,12 +1,8 @@
 package com.aiva.user.repository
 
 import com.aiva.user.entity.Child
-import com.aiva.user.entity.Gender
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import java.time.LocalDate
 import java.util.*
 
 /**
@@ -14,4 +10,9 @@ import java.util.*
  */
 @Repository
 interface ChildRepository : JpaRepository<Child, UUID> {
+    
+    /**
+     * 특정 사용자의 자녀가 있는지 확인
+     */
+    fun existsByUserId(userId: UUID): Boolean
 }
