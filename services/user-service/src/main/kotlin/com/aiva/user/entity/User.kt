@@ -8,12 +8,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Entity
-@Table(
-    name = "users",
-    uniqueConstraints = [
-        UniqueConstraint(columnNames = ["provider", "provider_user_id"])
-    ]
-)
+@Table(name = "users")
 @EntityListeners(AuditingEntityListener::class)
 class User(
     @Id
