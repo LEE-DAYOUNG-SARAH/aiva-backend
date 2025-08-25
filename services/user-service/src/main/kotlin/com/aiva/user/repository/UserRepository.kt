@@ -16,4 +16,9 @@ interface UserRepository : JpaRepository<User, UUID> {
      * OAuth 제공자와 제공자 사용자 ID로 사용자 조회
      */
     fun findByProviderAndProviderUserIdAndDeletedAtIsNull(provider: Provider, providerUserId: String): User?
+
+    /**
+     * 회원 조회
+     */
+    fun findByIdAndDeletedAtIsNull(userId: UUID): User?
 }

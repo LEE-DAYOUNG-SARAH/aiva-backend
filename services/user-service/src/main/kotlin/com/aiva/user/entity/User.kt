@@ -53,6 +53,18 @@ class User(
     fun updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now()
     }
+
+    fun uploadImage(avatarUrl: String) {
+        updateAvatarUrl(avatarUrl)
+    }
+
+    fun deleteImage() {
+        updateAvatarUrl(null)
+    }
+
+    private fun updateAvatarUrl(avatarUrl: String?) {
+        this.avatarUrl = avatarUrl
+    }
 }
 
 enum class Provider {
