@@ -1,8 +1,8 @@
 package com.aiva.user.user.service
 
-import com.aiva.user.auth.dto.UserInfo
-import com.aiva.user.user.repository.UserRepository
 import com.aiva.security.exception.UnauthorizedException
+import com.aiva.user.user.dto.UserResponse
+import com.aiva.user.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -20,12 +20,12 @@ class UserReadService(
     /**
      * 사용자 ID로 사용자 정보 조회
      */
-    fun getUserInfo(userIdString: String): UserInfo {
+    fun getUserInfo(userIdString: String): UserResponse {
         val userId = UUID.fromString(userIdString)
         val user = userRepository.findById(userId)
             .orElseThrow { UnauthorizedException("사용자를 찾을 수 없습니다") }
         
-        return UserInfo.from(user)
+        return UserResponse.from(user)
     }
     
     /**

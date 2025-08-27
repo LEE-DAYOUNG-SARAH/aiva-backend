@@ -1,6 +1,6 @@
 package com.aiva.user.auth.dto
 
-import com.aiva.user.user.entity.User
+import com.aiva.user.user.dto.UserResponse
 
 /**
  * 인증 관련 Request/Response DTO들
@@ -12,7 +12,14 @@ data class AppLoginRequest(
     val providerUserId: String,     // OAuth 제공자 사용자 ID
     val email: String,             // 이메일
     val nickname: String,           // 닉네임
-    val avatarUrl: String?          // 프로필 이미지 URL
+    val avatarUrl: String?,         // 프로필 이미지 URL
+    val deviceInfo: DeviceInfo      // 디바이스 정보
+)
+
+data class DeviceInfo(
+    val deviceIdentifier: String,   // 디바이스 고유 식별자
+    val platform: String,          // "ANDROID", "IOS", "WEB"
+    val appVersion: String          // 앱 버전
 )
 
 class AppLoginResponse(
@@ -20,7 +27,7 @@ class AppLoginResponse(
     refreshToken: String,
     tokenType: String = "Bearer",
     expiresIn: Long,            // 초 단위
-    user: UserInfo,
+    user: UserResponse,
     val hasChild: Boolean
 ): AuthResponse(accessToken, refreshToken, tokenType, expiresIn, user)
 
@@ -29,24 +36,8 @@ open class AuthResponse(
     val refreshToken: String,
     val tokenType: String = "Bearer",
     val expiresIn: Long,            // 초 단위
-    val user: UserInfo
+    val user: UserResponse
 )
-
-data class UserInfo(
-    val userId: String,
-    val email: String?,
-    val nickname: String,
-    val avatarUrl: String?
-) {
-    companion object {
-        fun from(user: User) = UserInfo(
-            userId = user.id.toString(),
-            email = user.email,
-            nickname = user.nickname,
-            avatarUrl = user.avatarUrl
-        )
-    }
-}
 
 data class RefreshTokenRequest(
     val refreshToken: String

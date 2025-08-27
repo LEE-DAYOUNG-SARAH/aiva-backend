@@ -8,8 +8,9 @@ import com.aiva.security.jwt.TokenType
 import com.aiva.user.auth.dto.AppLoginRequest
 import com.aiva.user.auth.dto.AppLoginResponse
 import com.aiva.user.auth.dto.AuthResponse
-import com.aiva.user.auth.dto.UserInfo
 import com.aiva.user.child.service.ChildReadService
+import com.aiva.user.user.dto.UserResponse
+import com.aiva.user.device.service.DeviceService
 import com.aiva.user.user.service.UserCreateService
 import com.aiva.user.user.service.UserReadService
 import org.springframework.stereotype.Service
@@ -25,6 +26,7 @@ class AuthService(
     private val userCreateService: UserCreateService,
     private val userReadService: UserReadService,
     private val childReadService: ChildReadService,
+    private val deviceService: DeviceService,
     private val jwtUtil: JwtUtil,
     private val authRedisService: AuthRedisService
 ) {
@@ -39,24 +41,27 @@ class AuthService(
         // 2. 로그인 시간 업데이트
         user.updateLastLogin()
         
-        // 3. Redis에 사용자 정보 캐시 (7일)
+        // 3. 디바이스 정보 등록/업데이트
+        deviceService.registerOrUpdateDevice(user.id, request.deviceInfo)
+        
+        // 4. Redis에 사용자 정보 캐시 (7일)
         authRedisService.setUserCache(user.id, user.email, user.nickname)
         
-        // 4. JWT 토큰 생성
+        // 5. JWT 토큰 생성
         val accessToken = jwtUtil.generateToken(user.id)
         val refreshToken = jwtUtil.generateRefreshToken(user.id)
         
-        // 5. 리프레시 토큰 Redis에 저장 (30일)
+        // 6. 리프레시 토큰 Redis에 저장 (30일)
         authRedisService.setRefreshToken(user.id, refreshToken)
         
-        // 6. 자녀 존재 여부 확인
+        // 7. 자녀 존재 여부 확인
         val hasChild = childReadService.hasChild(user.id)
         
         return AppLoginResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresIn = jwtUtil.getExpirationTime(),
-            user = UserInfo.from(user),
+            user = UserResponse.from(user),
             hasChild = hasChild
         )
     }
@@ -97,7 +102,7 @@ class AuthService(
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
             expiresIn = jwtUtil.getExpirationTime(),
-            user = UserInfo.from(user)
+            user = UserResponse.from(user)
         )
     }
     
