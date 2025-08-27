@@ -8,12 +8,16 @@ import com.aiva.user.user.dto.UserResponse
 
 // 앱에서 OAuth 완료 후 서버로 사용자 정보 전달
 data class AppLoginRequest(
+    val userInfo: UserInfo,         // 사용자 정보
+    val deviceInfo: DeviceInfo      // 디바이스 정보
+)
+
+data class UserInfo(
     val provider: String,           // "KAKAO" or "GOOGLE"
     val providerUserId: String,     // OAuth 제공자 사용자 ID
     val email: String,             // 이메일
     val nickname: String,           // 닉네임
-    val avatarUrl: String?,         // 프로필 이미지 URL
-    val deviceInfo: DeviceInfo      // 디바이스 정보
+    val avatarUrl: String?          // 프로필 이미지 URL
 )
 
 data class DeviceInfo(

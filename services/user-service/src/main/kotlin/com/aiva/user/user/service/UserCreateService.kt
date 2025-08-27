@@ -1,6 +1,9 @@
 package com.aiva.user.user.service
 
 import com.aiva.user.auth.dto.AppLoginRequest
+import com.aiva.user.auth.dto.DeviceInfo
+import com.aiva.user.auth.dto.UserInfo
+import com.aiva.user.device.service.DeviceService
 import com.aiva.user.user.entity.Provider
 import com.aiva.user.user.entity.User
 import com.aiva.user.user.repository.UserRepository
@@ -14,24 +17,53 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 class UserCreateService(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val deviceService: DeviceService,
 ) {
     
     /**
-     * 앱에서 받은 사용자 정보로 기존 사용자 조회 또는 신규 생성
+     * 사용자 생성/업데이트
      */
-    fun findOrCreateUser(appUser: AppLoginRequest): User {
-        val provider = Provider.valueOf(appUser.provider.uppercase())
+    fun findOrCreateUser(request: AppLoginRequest): User {
+        val provider = Provider.valueOf(request.userInfo.provider.uppercase())
         
-        return userRepository.findByProviderAndProviderUserIdAndDeletedAtIsNull(provider, appUser.providerUserId)
-            ?: userRepository.save(
-                User(
-                    provider = provider,
-                    providerUserId = appUser.providerUserId,
-                    email = appUser.email,
-                    nickname = appUser.nickname,
-                    avatarUrl = appUser.avatarUrl
-                )
+        val existingUser =
+            userRepository.findByProviderAndProviderUserIdAndDeletedAtIsNull(provider, request.userInfo.providerUserId)
+
+        return if(existingUser == null) {
+            createUser(provider, request.userInfo, request.deviceInfo)
+        } else {
+            updateUser(existingUser, request.deviceInfo)
+        }
+    }
+    /**
+     * 사용자 생성
+     */
+    private fun createUser(provider: Provider, userInfo: UserInfo, deviceInfo: DeviceInfo): User {
+        val user = userRepository.save(
+            User(
+                provider = provider,
+                providerUserId = userInfo.providerUserId,
+                email = userInfo.email,
+                nickname = userInfo.nickname,
+                avatarUrl = userInfo.avatarUrl
             )
+        )
+
+        deviceService.createDevice(user.id, deviceInfo)
+
+        // TODO. 알림 설정 생
+
+        return user
+    }
+
+    /**
+     * 사용자 업데이트
+     */
+    private fun updateUser(user: User, deviceInfo: DeviceInfo): User {
+        deviceService.updateDevice(user.id, deviceInfo)
+        user.updateLastLogin()
+
+        return user
     }
 }

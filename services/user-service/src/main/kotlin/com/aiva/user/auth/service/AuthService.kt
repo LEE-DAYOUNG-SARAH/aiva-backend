@@ -10,7 +10,6 @@ import com.aiva.user.auth.dto.AppLoginResponse
 import com.aiva.user.auth.dto.AuthResponse
 import com.aiva.user.child.service.ChildReadService
 import com.aiva.user.user.dto.UserResponse
-import com.aiva.user.device.service.DeviceService
 import com.aiva.user.user.service.UserCreateService
 import com.aiva.user.user.service.UserReadService
 import org.springframework.stereotype.Service
@@ -26,7 +25,6 @@ class AuthService(
     private val userCreateService: UserCreateService,
     private val userReadService: UserReadService,
     private val childReadService: ChildReadService,
-    private val deviceService: DeviceService,
     private val jwtUtil: JwtUtil,
     private val authRedisService: AuthRedisService
 ) {
@@ -37,24 +35,18 @@ class AuthService(
     fun login(request: AppLoginRequest): AppLoginResponse {
         // 1. 기존 사용자 조회 또는 신규 생성
         val user = userCreateService.findOrCreateUser(request)
-
-        // 2. 로그인 시간 업데이트
-        user.updateLastLogin()
         
-        // 3. 디바이스 정보 등록/업데이트
-        deviceService.registerOrUpdateDevice(user.id, request.deviceInfo)
-        
-        // 4. Redis에 사용자 정보 캐시 (7일)
+        // 2. Redis에 사용자 정보 캐시 (7일)
         authRedisService.setUserCache(user.id, user.email, user.nickname)
         
-        // 5. JWT 토큰 생성
+        // 3. JWT 토큰 생성
         val accessToken = jwtUtil.generateToken(user.id)
         val refreshToken = jwtUtil.generateRefreshToken(user.id)
         
-        // 6. 리프레시 토큰 Redis에 저장 (30일)
+        // 4. 리프레시 토큰 Redis에 저장 (30일)
         authRedisService.setRefreshToken(user.id, refreshToken)
         
-        // 7. 자녀 존재 여부 확인
+        // 5. 자녀 존재 여부 확인
         val hasChild = childReadService.hasChild(user.id)
         
         return AppLoginResponse(

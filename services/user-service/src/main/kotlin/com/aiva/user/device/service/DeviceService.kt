@@ -16,29 +16,31 @@ import java.util.*
 class DeviceService(
     private val userDeviceRepository: UserDeviceRepository
 ) {
-    
+
     /**
-     * 로그인 시 디바이스 정보 등록/업데이트
+     * 디바이스 생성
      */
-    fun registerOrUpdateDevice(userId: UUID, deviceInfo: DeviceInfo): UserDevice {
-        val platform = Platform.valueOf(deviceInfo.platform.uppercase())
-        
-        val existingDevice = getUserDevice(userId, deviceInfo.deviceIdentifier)
-        
-        return if (existingDevice != null) {
-            // 기존 디바이스 앱 버전 업데이트
-            existingDevice.updateAppVersion(deviceInfo.appVersion)
-            existingDevice
-        } else {
-            // 새 디바이스 등록
-            userDeviceRepository.save(
-                UserDevice(
-                    userId = userId,
-                    deviceIdentifier = deviceInfo.deviceIdentifier,
-                    platform = platform,
-                    appVersion = deviceInfo.appVersion
-                )
+    fun createDevice(userId: UUID, request: DeviceInfo) {
+        userDeviceRepository.save(
+            UserDevice(
+                userId = userId,
+                deviceIdentifier = request.deviceIdentifier,
+                platform = Platform.valueOf(request.platform.uppercase()),
+                appVersion = request.appVersion
             )
+        )
+    }
+
+    /**
+     * 디바이스 업데이트
+     */
+    fun updateDevice(userId: UUID, deviceInfo: DeviceInfo) {
+        val existingDevice = getUserDevice(userId, deviceInfo.deviceIdentifier)
+
+        if(existingDevice != null) {
+            existingDevice.updateAppVersion(deviceInfo.appVersion)
+        } else {
+            createDevice(userId, deviceInfo)
         }
     }
     
