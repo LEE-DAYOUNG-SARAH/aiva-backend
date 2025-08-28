@@ -9,7 +9,8 @@ import com.aiva.user.user.dto.UserResponse
 // 앱에서 OAuth 완료 후 서버로 사용자 정보 전달
 data class AppLoginRequest(
     val userInfo: UserInfo,         // 사용자 정보
-    val deviceInfo: DeviceInfo      // 디바이스 정보
+    val deviceInfo: DeviceInfo,     // 디바이스 정보
+    val systemNotificationEnabled: Boolean?      // 시스템 알림 권한 허용 여부
 )
 
 data class UserInfo(

@@ -4,6 +4,7 @@ import com.aiva.user.auth.dto.AppLoginRequest
 import com.aiva.user.auth.dto.DeviceInfo
 import com.aiva.user.auth.dto.UserInfo
 import com.aiva.user.device.service.DeviceService
+import com.aiva.user.notification.service.NotificationSettingService
 import com.aiva.user.user.entity.Provider
 import com.aiva.user.user.entity.User
 import com.aiva.user.user.repository.UserRepository
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 class UserCreateService(
     private val userRepository: UserRepository,
     private val deviceService: DeviceService,
+    private val notificationSettingService: NotificationSettingService
 ) {
     
     /**
@@ -31,7 +33,7 @@ class UserCreateService(
             userRepository.findByProviderAndProviderUserIdAndDeletedAtIsNull(provider, request.userInfo.providerUserId)
 
         return if(existingUser == null) {
-            createUser(provider, request.userInfo, request.deviceInfo)
+            createUser(provider, request.userInfo, request.deviceInfo, request.systemNotificationEnabled)
         } else {
             updateUser(existingUser, request.deviceInfo)
         }
@@ -39,7 +41,12 @@ class UserCreateService(
     /**
      * 사용자 생성
      */
-    private fun createUser(provider: Provider, userInfo: UserInfo, deviceInfo: DeviceInfo): User {
+    private fun createUser(
+        provider: Provider,
+        userInfo: UserInfo,
+        deviceInfo: DeviceInfo,
+        systemNotificationEnabled: Boolean?
+    ): User {
         val user = userRepository.save(
             User(
                 provider = provider,
@@ -52,7 +59,9 @@ class UserCreateService(
 
         deviceService.createDevice(user.id, deviceInfo)
 
-        // TODO. 알림 설정 생
+        systemNotificationEnabled?.let {
+            notificationSettingService.createNotificationSetting(user.id, it)
+        }
 
         return user
     }
