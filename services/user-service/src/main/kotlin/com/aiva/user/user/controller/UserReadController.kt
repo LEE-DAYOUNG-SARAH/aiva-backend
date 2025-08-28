@@ -1,9 +1,12 @@
 package com.aiva.user.user.controller
 
-import com.aiva.user.auth.dto.UserInfo
-import com.aiva.user.user.service.UserReadService
 import com.aiva.common.response.ApiResponse
-import org.springframework.web.bind.annotation.*
+import com.aiva.user.user.dto.UserResponse
+import com.aiva.user.user.service.UserReadService
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 /**
  * 사용자 조회 관련 API 컨트롤러
@@ -19,7 +22,7 @@ class UserReadController(
      * 현재 사용자 정보 조회
      */
     @GetMapping("/me")
-    fun getCurrentUser(@RequestHeader("X-User-Id") userId: String): ApiResponse<UserInfo> {
+    fun getCurrentUser(@RequestHeader("X-User-Id") userId: String): ApiResponse<UserResponse> {
         return ApiResponse.success(
             userReadService.getUserInfo(userId)
         )
