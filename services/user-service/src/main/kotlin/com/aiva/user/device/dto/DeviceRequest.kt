@@ -10,7 +10,7 @@ data class DeviceUpdateRequest(
     val osVersion: String? = null
 )
 
-data class DeviceResponse(
+data class DeviceUpdateResponse(
     val id: String,
     val deviceIdentifier: String,
     val platform: String,

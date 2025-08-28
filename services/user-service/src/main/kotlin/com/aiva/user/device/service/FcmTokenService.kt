@@ -1,7 +1,7 @@
 package com.aiva.user.device.service
 
 import com.aiva.security.exception.UnauthorizedException
-import com.aiva.user.device.dto.FcmTokenResponse
+import com.aiva.user.device.dto.FcmTokenUpdateResponse
 import com.aiva.user.device.dto.FcmTokenUpdateRequest
 import com.aiva.user.device.entity.FcmToken
 import com.aiva.user.device.entity.UserDevice
@@ -21,7 +21,7 @@ class FcmTokenService(
     /**
      * FCM 토큰 업데이트
      */
-    fun updateFcmToken(userId: UUID, deviceIdentifier: String, request: FcmTokenUpdateRequest): FcmTokenResponse {
+    fun updateFcmToken(userId: UUID, deviceIdentifier: String, request: FcmTokenUpdateRequest): FcmTokenUpdateResponse {
         // 1. 디바이스 조회 및 권한 확인
         val device = deviceService.getUserDevice(userId, deviceIdentifier)
             ?: throw UnauthorizedException("디바이스를 찾을 수 없습니다")
@@ -49,10 +49,10 @@ class FcmTokenService(
     /**
      * 기존 토큰 검증 시간 업데이트
      */
-    private fun updateTokenValidationTime(token: FcmToken): FcmTokenResponse {
+    private fun updateTokenValidationTime(token: FcmToken): FcmTokenUpdateResponse {
         token.updateLastValidateAt()
 
-        return FcmTokenResponse.from(token)
+        return FcmTokenUpdateResponse.from(token)
     }
 
     /**
@@ -62,7 +62,7 @@ class FcmTokenService(
         device: UserDevice,
         existingToken: FcmToken?,
         newToken: String
-    ): FcmTokenResponse {
+    ): FcmTokenUpdateResponse {
         // 1. 기존 토큰 비활성화
         existingToken?.revoke()
 
@@ -85,7 +85,7 @@ class FcmTokenService(
         // 4. 디바이스 접속 시간 업데이트
         device.updateLastSeen()
 
-        return FcmTokenResponse.from(newFcmToken)
+        return FcmTokenUpdateResponse.from(newFcmToken)
     }
 
 }

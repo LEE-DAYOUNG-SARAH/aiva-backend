@@ -1,7 +1,7 @@
 package com.aiva.user.device.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.user.device.dto.FcmTokenResponse
+import com.aiva.user.device.dto.FcmTokenUpdateResponse
 import com.aiva.user.device.dto.FcmTokenUpdateRequest
 import com.aiva.user.device.service.FcmTokenService
 import jakarta.validation.Valid
@@ -22,7 +22,7 @@ class FcmTokenController(
         @RequestHeader("X-User-Id") userId: String,
         @PathVariable deviceIdentifier: String,
         @Valid @RequestBody request: FcmTokenUpdateRequest
-    ): ApiResponse<FcmTokenResponse> {
+    ): ApiResponse<FcmTokenUpdateResponse> {
         val fcmToken = fcmTokenService.updateFcmToken(
             UUID.fromString(userId), 
             deviceIdentifier, 

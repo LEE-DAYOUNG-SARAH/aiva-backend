@@ -10,14 +10,14 @@ data class FcmTokenUpdateRequest(
     val fcmToken: String
 )
 
-data class FcmTokenResponse(
+data class FcmTokenUpdateResponse(
     val id: UUID,
     val fcmToken: String,
     val lastValidatedAt: LocalDateTime,
     val createdAt: LocalDateTime
 ) {
     companion object {
-        fun from(fcmToken: FcmToken) = FcmTokenResponse(
+        fun from(fcmToken: FcmToken) = FcmTokenUpdateResponse(
             id = fcmToken.id,
             fcmToken = fcmToken.fcmToken,
             lastValidatedAt = fcmToken.lastValidatedAt ?: LocalDateTime.now(),

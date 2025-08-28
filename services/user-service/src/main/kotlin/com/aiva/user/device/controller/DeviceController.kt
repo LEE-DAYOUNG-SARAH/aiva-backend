@@ -1,7 +1,7 @@
 package com.aiva.user.device.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.user.device.dto.DeviceResponse
+import com.aiva.user.device.dto.DeviceUpdateResponse
 import com.aiva.user.device.dto.DeviceUpdateRequest
 import com.aiva.user.device.service.DeviceService
 import jakarta.validation.Valid
@@ -22,7 +22,7 @@ class DeviceController(
         @RequestHeader("X-User-Id") userId: String,
         @PathVariable deviceIdentifier: String,
         @Valid @RequestBody request: DeviceUpdateRequest
-    ): ApiResponse<DeviceResponse> {
+    ): ApiResponse<DeviceUpdateResponse> {
         val device = deviceService.updateDeviceDetails(
             UUID.fromString(userId), 
             deviceIdentifier, 

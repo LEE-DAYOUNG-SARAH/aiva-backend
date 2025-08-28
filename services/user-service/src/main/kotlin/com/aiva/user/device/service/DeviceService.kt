@@ -1,7 +1,7 @@
 package com.aiva.user.device.service
 
 import com.aiva.user.auth.dto.DeviceInfo
-import com.aiva.user.device.dto.DeviceResponse
+import com.aiva.user.device.dto.DeviceUpdateResponse
 import com.aiva.user.device.dto.DeviceUpdateRequest
 import com.aiva.user.device.entity.Platform
 import com.aiva.user.device.entity.UserDevice
@@ -47,13 +47,13 @@ class DeviceService(
     /**
      * 디바이스 상세 정보 업데이트
      */
-    fun updateDeviceDetails(userId: UUID, deviceIdentifier: String, request: DeviceUpdateRequest): DeviceResponse {
+    fun updateDeviceDetails(userId: UUID, deviceIdentifier: String, request: DeviceUpdateRequest): DeviceUpdateResponse {
         val device = getUserDevice(userId, deviceIdentifier)
             ?: throw UnauthorizedException("디바이스를 찾을 수 없습니다")
         
         device.updateDeviceDetails(request.deviceModel, request.osVersion)
 
-        return DeviceResponse(
+        return DeviceUpdateResponse(
             id = device.id.toString(),
             deviceIdentifier = device.deviceIdentifier,
             platform = device.platform.name,

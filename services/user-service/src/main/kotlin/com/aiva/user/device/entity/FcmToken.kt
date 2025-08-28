@@ -36,8 +36,8 @@ data class FcmToken(
 ) {
     fun updateToken(newToken: String) {
         this.fcmToken = newToken
-        this.lastValidatedAt = LocalDateTime.now()
         this.isActive = true
+        updateLastValidateAt()
     }
     
     fun revoke() {
