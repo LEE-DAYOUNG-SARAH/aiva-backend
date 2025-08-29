@@ -38,7 +38,7 @@ data class Child(
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
     fun update(birthType: BirthType, birthDate: LocalDate?, gender: Gender, note: String?) {
         this.birthType = birthType

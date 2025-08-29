@@ -5,12 +5,14 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
 
 /**
  * Redis 설정
  * 모든 서비스에서 동일한 Redis 설정 사용
  */
 @Configuration
+@EnableRedisRepositories(basePackages = ["com.aiva.common.redis.repository"])
 class RedisConfig {
     
     @Bean
