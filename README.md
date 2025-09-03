@@ -1,6 +1,14 @@
-# AIVA - AI 육아 비서 서비스
+# AIVA - 생성형 AI 육아 상담 서비스 👶🤖
 
-AIVA는 Kotlin + Spring Boot 3 기반 MSA(Microservices Architecture)로 구성된 AI 비서 서비스입니다.
+AIVA는 부모를 위한 **AI 육아 비서**입니다.  
+아이 프로필을 기반으로 맞춤형 상담(Q&A)을 제공하고, 최신 육아 정책·혜택 정보를 안내하며,  
+부모 간의 커뮤니티와 실시간 알림 기능까지 지원합니다.
+
+## 🏆 Achievement
+- 2025 서울 우먼해커톤 **결선 진출**
+- "여성·가족 친화 서비스" 주제로 **AI 육아 비서 서버 및 백엔드 개발** 담당
+
+---
 
 ## 🏗️ 시스템 아키텍처
 
@@ -16,7 +24,7 @@ AIVA는 Kotlin + Spring Boot 3 기반 MSA(Microservices Architecture)로 구성�
 - **Database**: MySQL (각 서비스별 독립 DB)
 - **Cache**: Redis (캐싱 및 세션 관리)
 - **Message Queue**: AWS SNS + SQS (알림 처리)
-- **Container**: Docker & Kubernetes
+- **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
 
 ## 📁 프로젝트 구조
@@ -31,7 +39,6 @@ aiva-msa/
 │   └── subscription-service/  # 구독 서비스
 ├── infrastructure/
 │   ├── docker/               # Docker 설정
-│   ├── kubernetes/           # K8s 설정
 │   ├── terraform/            # AWS 인프라 설정
 │   └── gateway/              # API Gateway 설정
 ├── shared/
@@ -47,13 +54,8 @@ aiva-msa/
 - **ORM**: Spring Data JPA
 - **Cache**: Redis
 - **Message Queue**: AWS SNS/SQS
-- **Container**: Docker + Kubernetes
+- **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
-- **Service Discovery**: Eureka Server
-- **Configuration**: Spring Cloud Config
-- **Circuit Breaker**: Resilience4j
-- **Monitoring**: Micrometer + Spring Boot Actuator
-- **Documentation**: SpringDoc OpenAPI 3
 
 ## 📊 서비스별 포트 및 책임
 
@@ -183,48 +185,7 @@ docker-compose up -d
 docker-compose up -d
 ```
 
-## ☸️ Kubernetes 배포
-
-### 네임스페이스 생성
-```bash
-kubectl apply -f infrastructure/kubernetes/namespace.yaml
-```
-
-### 데이터베이스 배포
-```bash
-kubectl apply -f infrastructure/kubernetes/mysql-deployment.yaml
-```
-
-### 애플리케이션 배포 (향후 추가 예정)
-```bash
-kubectl apply -f infrastructure/kubernetes/services/
-```
-
 ## 🏗️ AWS 인프라 배포
-
-### Terraform으로 AWS 리소스 생성
-```bash
-cd infrastructure/terraform
-terraform init
-terraform plan
-terraform apply
-```
-
-생성되는 AWS 리소스:
-- SNS Topic (알림 발송)
-- SQS Queue (알림 처리)
-- Lambda Function (FCM 푸시 처리)
-- IAM Roles & Policies
-
-## 📊 모니터링
-
-### 헬스체크
-- 각 서비스: `http://localhost:808X/actuator/health`
-- Gateway: `http://localhost:8080/actuator/health`
-
-### 메트릭
-- 각 서비스: `http://localhost:808X/actuator/metrics`
-- 서비스 정보: `http://localhost:808X/actuator/info`
 
 ## 🛠️ 개발 도구
 
