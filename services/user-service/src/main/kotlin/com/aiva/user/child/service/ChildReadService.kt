@@ -1,5 +1,7 @@
 package com.aiva.user.child.service
 
+import com.aiva.common.dto.ChildData
+import com.aiva.user.child.entity.BirthType
 import com.aiva.user.child.repository.ChildRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,5 +22,16 @@ class ChildReadService(
      */
     fun hasChild(userId: UUID): Boolean {
         return childRepository.existsByUserId(userId)
+    }
+
+    fun getChildData(userId: UUID): ChildData? {
+        return childRepository.findByUserId(userId)?.let {
+            ChildData(
+                childId = it.id,
+                isBorn = it.birthType == BirthType.BORN,
+                childBirthdate = it.birthDate,
+                gender = it.gender.name
+            )
+        }
     }
 }

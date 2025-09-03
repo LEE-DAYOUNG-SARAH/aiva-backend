@@ -1,0 +1,1 @@
+ALTER TABLE chats ADD COLUMN log_id VARCHAR(255);
