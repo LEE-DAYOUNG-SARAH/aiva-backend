@@ -60,7 +60,17 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-file:
-  upload:
-    path: /tmp/aiva/uploads
-    max-size: 10485760  # 10MB
+app:
+  webclient:
+    connect-timeout: 3000
+    read-timeout: 10000
+    services:
+      user-service:
+        url: ${USER_SERVICE_URL:http://localhost:8081}
+        connect-timeout: 3000
+        read-timeout: 5000
+      notification-service:
+        url: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+        connect-timeout: 2000
+        read-timeout: 3000
+
