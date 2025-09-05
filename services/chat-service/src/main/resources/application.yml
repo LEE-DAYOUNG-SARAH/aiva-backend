@@ -57,3 +57,17 @@ springdoc:
 
 openai:
   api-key: ${OPENAI_API_KEY:your-openai-api-key}
+
+ai:
+  server:
+    base-url: ${AI_SERVER_URL:http://localhost:8080}
+
+app:
+  webclient:
+    connect-timeout: 5000
+    read-timeout: 10000
+    services:
+      user-service:
+        url: ${USER_SERVICE_URL:http://localhost:8081}
+        connect-timeout: 3000
+        read-timeout: 5000

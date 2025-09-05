@@ -5,7 +5,7 @@ import com.aiva.chat.dto.ChatCreateResponse
 import com.aiva.chat.dto.MessageRequest
 import com.aiva.chat.service.ChatManagementService
 import com.aiva.chat.service.ChatStreamService
-import com.aiva.chat.service.UserServiceClient
+import com.aiva.common.client.UserServiceClient
 import com.aiva.common.dto.ChildData
 import com.aiva.common.response.ApiResponse
 import jakarta.validation.Valid
@@ -42,19 +42,16 @@ class ChatController(
     ): Flux<String> {
         val userId = UUID.fromString(userIdString)
 
-        return userServiceClient.getChildData(userId)
-            .flatMapMany { childData ->
-                // 1. 첫 메시지 여부 확인 및 사용자 메시지 저장
-                val isFirstMessage = chatManagementService.isFirstMessage(chatId)
-                chatManagementService.saveUserMessage(chatId, request.content)
-                
-                // 2. AI 요청 생성 및 스트리밍
-                val aiRequest = createAiRequest(userId, request.content, childData, chatId, isFirstMessage)
-                chatStreamService.streamChatResponse(aiRequest, chatId, sessionId, isFirstMessage)
-            }
-            .onErrorResume { e ->
-                Flux.just("event: error\ndata: {\"message\": \"${e.message ?: "알 수 없는 오류"}\"}\n\n")
-            }
+        val childData = userServiceClient.getChildData(userId)
+            ?: throw RuntimeException("사용자 정보 조회 실패")
+
+        // 1. 첫 메시지 여부 확인 및 사용자 메시지 저장
+        val isFirstMessage = chatManagementService.isFirstMessage(chatId)
+        chatManagementService.saveUserMessage(chatId, request.content)
+
+        // 2. AI 요청 생성 및 스트리밍
+        val aiRequest = createAiRequest(userId, request.content, childData, chatId, isFirstMessage)
+        return chatStreamService.streamChatResponse(aiRequest, chatId, sessionId, isFirstMessage)
     }
     
     @PostMapping("/{chatId}/cancel")
