@@ -1,5 +1,6 @@
-package com.aiva.community.entity
+package com.aiva.community.post.entity
 
+import com.aiva.community.comment.entity.Comment
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
@@ -16,9 +17,12 @@ data class CommunityPost(
     
     @Column(name = "user_id", nullable = false)
     val userId: UUID,
+
+    @Column(name = "title", nullable = false, length = 50)
+    var title: String,
     
     @Column(name = "content", nullable = false, length = 1000)
-    val content: String,
+    var content: String,
     
     @Column(name = "like_count", nullable = false)
     var likeCount: Int = 0,
@@ -27,7 +31,7 @@ data class CommunityPost(
     var commentCount: Int = 0,
     
     @Column(name = "deleted_at")
-    val deletedAt: LocalDateTime? = null,
+    var deletedAt: LocalDateTime? = null,
     
     @CreatedDate
     @Column(name = "created_at", nullable = false)
@@ -50,64 +54,11 @@ data class CommunityPost(
     fun decrementLikeCount() { if (likeCount > 0) likeCount-- }
     fun incrementCommentCount() { commentCount++ }
     fun decrementCommentCount() { if (commentCount > 0) commentCount-- }
-}
 
-@Entity
-@Table(name = "community_post_images")
-@EntityListeners(AuditingEntityListener::class)
-data class CommunityPostImage(
-    @Id
-    val id: UUID = UUID.randomUUID(),
-    
-    @Column(name = "post_id", nullable = false)
-    val postId: UUID,
-    
-    @Column(name = "url", nullable = false, columnDefinition = "TEXT")
-    val url: String,
-    
-    @Column(name = "width")
-    val width: Int? = null,
-    
-    @Column(name = "height")
-    val height: Int? = null,
-    
-    @Column(name = "mime_type", length = 50)
-    val mimeType: String? = null,
-    
-    @CreatedDate
-    @Column(name = "created_at", nullable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
-    
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    val updatedAt: LocalDateTime = LocalDateTime.now()
-)
+    fun delete() { deletedAt = LocalDateTime.now() }
 
-@Entity
-@Table(name = "community_likes")
-@EntityListeners(AuditingEntityListener::class)
-data class CommunityLike(
-    @Id
-    val id: UUID = UUID.randomUUID(),
-    
-    @Column(name = "post_id", nullable = false)
-    val postId: UUID,
-    
-    @Column(name = "user_id", nullable = false)
-    val userId: UUID,
-    
-    @CreatedDate
-    @Column(name = "created_at", nullable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
-    
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    val updatedAt: LocalDateTime = LocalDateTime.now()
-) {
-    @Table(
-        uniqueConstraints = [
-            UniqueConstraint(columnNames = ["post_id", "user_id"])
-        ]
-    )
-    companion object
+    fun update(title: String, content: String) {
+        this.title = title
+        this.content = content
+    }
 }

@@ -12,7 +12,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     
-    // 파일 업로드
+    // Web Client for service integration
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     
     // 테스트
