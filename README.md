@@ -1,12 +1,12 @@
-# AIVA - 생성형 AI 육아 상담 서비스 👶🤖
+# AIVA - 생성형 AI 육아 채팅 서비스 👶🤖
 
 AIVA는 부모를 위한 **AI 육아 비서**입니다.  
-아이 프로필을 기반으로 맞춤형 상담(Q&A)을 제공하고, 최신 육아 정책·혜택 정보를 안내하며,  
+아이 프로필을 기반으로 맞춤형 채팅 서비스(Q&A)를 제공하고, 최신 육아 정책·혜택 정보를 안내하며,  
 부모 간의 커뮤니티와 실시간 알림 기능까지 지원합니다.
 
 ## 🏆 Achievement
 - 2025 서울 우먼해커톤 **결선 진출**
-- "여성·가족 친화 서비스" 주제로 **AI 육아 비서 서버 및 백엔드 개발** 담당
+- "여성·가족 친화 서비스" 주제로 **AI 육아 채팅 서버 및 백엔드 개발** 담당
 
 ---
 
@@ -23,7 +23,7 @@ AIVA는 부모를 위한 **AI 육아 비서**입니다.
 ### 인프라 구성
 - **Database**: MySQL (각 서비스별 독립 DB)
 - **Cache**: Redis (캐싱 및 세션 관리)
-- **Message Queue**: AWS SNS + SQS (알림 처리)
+- **Message Queue**: Kafka (알림 처리)
 - **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
 
@@ -39,8 +39,8 @@ aiva-msa/
 │   └── subscription-service/  # 구독 서비스
 ├── infrastructure/
 │   ├── docker/               # Docker 설정
-│   ├── terraform/            # AWS 인프라 설정
 │   └── gateway/              # API Gateway 설정
+│   └── kafka/                # Kafka 설정
 ├── shared/
 │   ├── libs/                 # 공통 라이브러리
 │   └── schemas/              # 공통 스키마
@@ -53,7 +53,8 @@ aiva-msa/
 - **Database**: MySQL 8.0
 - **ORM**: Spring Data JPA
 - **Cache**: Redis
-- **Message Queue**: AWS SNS/SQS
+- **Object Storage**: AWS S3
+- **Message Queue**: Kakfa
 - **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
 
@@ -153,14 +154,12 @@ REDIS_PORT=6379
 # JWT
 JWT_SECRET=aiva-jwt-secret-key
 
-# AWS (알림 시스템)
-AWS_SNS_TOPIC_ARN=arn:aws:sns:...
-AWS_SQS_QUEUE_URL=https://sqs...
+# AWS
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 
 # 외부 API
-OPENAI_API_KEY=your-openai-api-key
+AI_API_KEY=your-openai-api-key
 FCM_SERVICE_ACCOUNT_KEY=path-to-firebase-json
 
 # 결제
