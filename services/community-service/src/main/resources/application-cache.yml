@@ -1,0 +1,59 @@
+# Redis Cache Configuration for Community Service
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          max-wait: -1ms
+      
+# Community Cache Settings
+community:
+  cache:
+    post:
+      ttl: PT30M  # 30분
+      list-ttl: PT1M  # 1분
+    user:
+      ttl: PT1H  # 1시간
+    stats:
+      enabled: true
+      log-interval: PT5M  # 5분마다 로그
+
+# Profile별 환경 설정
+---
+spring:
+  profiles: local
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+---
+spring:
+  profiles: development
+  data:
+    redis:
+      host: redis-dev.aiva.internal
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+
+---
+spring:
+  profiles: production
+  data:
+    redis:
+      host: redis-prod.aiva.internal
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl: true
+      timeout: 5000ms
+      jedis:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
