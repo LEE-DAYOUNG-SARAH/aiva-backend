@@ -1,6 +1,7 @@
 package com.aiva.chat.service
 
 import com.aiva.chat.dto.AiChatRequest
+import com.fasterxml.jackson.databind.JsonNode
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
@@ -43,7 +44,7 @@ class ChatStreamService(
         }
     }
     
-    private fun processDataEvent(dataNode: com.fasterxml.jackson.databind.JsonNode, state: ChatStreamingState) {
+    private fun processDataEvent(dataNode: JsonNode, state: ChatStreamingState) {
         // 로그 ID 추출 (첫 채팅만)
         aiResponseParser.extractLogId(dataNode)?.let { logId ->
             state.setLogId(logId, state.isFirstChat)
