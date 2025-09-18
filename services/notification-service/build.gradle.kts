@@ -12,6 +12,9 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+    
     // AWS SDK
     implementation("software.amazon.awssdk:sns:2.21.1")
     implementation("software.amazon.awssdk:sqs:2.21.1")
@@ -24,4 +27,6 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.testcontainers:mysql")
     testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("com.ninja-squad:springmockk:4.0.2")
 }

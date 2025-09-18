@@ -33,6 +33,19 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      properties:
+        max.poll.records: 10
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 10000
+
 server:
   port: 8084
 
@@ -62,5 +75,8 @@ aws:
   sqs:
     queue-url: ${AWS_SQS_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/123456789012/aiva-notification-queue-dev}
 
-fcm:
-  service-account-key: ${FCM_SERVICE_ACCOUNT_KEY:classpath:firebase-service-account.json}
+firebase:
+  config:
+    file: ${FIREBASE_CONFIG_FILE:firebase-service-account.json}
+  project:
+    id: ${FIREBASE_PROJECT_ID:aiva-project}
