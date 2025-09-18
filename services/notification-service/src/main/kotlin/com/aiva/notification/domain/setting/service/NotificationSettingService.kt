@@ -1,11 +1,11 @@
-package com.aiva.notification.setting.service
+package com.aiva.notification.domain.setting.service
 
-import com.aiva.notification.setting.dto.NotificationPermissionResponse
-import com.aiva.notification.setting.dto.NotificationSettingUpdateRequest
-import com.aiva.notification.setting.dto.NotificationSettingUpdateResponse
-import com.aiva.notification.setting.entity.*
-import com.aiva.notification.setting.repository.NotificationConsentEventRepository
-import com.aiva.notification.setting.repository.UserNotificationSettingRepository
+import com.aiva.notification.domain.setting.dto.NotificationPermissionResponse
+import com.aiva.notification.domain.setting.dto.NotificationSettingUpdateRequest
+import com.aiva.notification.domain.setting.dto.NotificationSettingUpdateResponse
+import com.aiva.notification.domain.setting.entity.*
+import com.aiva.notification.domain.setting.repository.NotificationConsentEventRepository
+import com.aiva.notification.domain.setting.repository.UserNotificationSettingRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*

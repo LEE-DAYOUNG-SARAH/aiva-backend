@@ -1,7 +1,7 @@
-package com.aiva.notification.setting.repository
+package com.aiva.notification.domain.setting.repository
 
-import com.aiva.notification.setting.entity.UserNotificationSetting
-import com.aiva.notification.setting.entity.NotificationPermissionType
+import com.aiva.notification.domain.setting.entity.UserNotificationSetting
+import com.aiva.notification.domain.setting.entity.NotificationPermissionType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

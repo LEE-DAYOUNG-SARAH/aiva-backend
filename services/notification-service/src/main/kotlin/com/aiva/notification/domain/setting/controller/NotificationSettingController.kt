@@ -1,8 +1,10 @@
-package com.aiva.notification.setting.controller
+package com.aiva.notification.domain.setting.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.notification.setting.dto.*
-import com.aiva.notification.setting.service.NotificationSettingService
+import com.aiva.notification.domain.setting.dto.NotificationPermissionResponse
+import com.aiva.notification.domain.setting.dto.NotificationSettingUpdateRequest
+import com.aiva.notification.domain.setting.dto.NotificationSettingUpdateResponse
+import com.aiva.notification.domain.setting.service.NotificationSettingService
 import com.aiva.security.annotation.CurrentUser
 import com.aiva.security.dto.UserPrincipal
 import org.springframework.security.access.prepost.PreAuthorize

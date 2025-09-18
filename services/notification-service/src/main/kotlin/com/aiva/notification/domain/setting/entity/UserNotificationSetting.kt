@@ -1,4 +1,4 @@
-package com.aiva.notification.setting.entity
+package com.aiva.notification.domain.setting.entity
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
@@ -18,21 +18,21 @@ import java.util.*
 data class UserNotificationSetting(
     @Id
     val id: UUID = UUID.randomUUID(),
-    
+
     @Column(name = "user_id", nullable = false)
     val userId: UUID,
-    
+
     @Column(name = "permission_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     val permissionType: NotificationPermissionType,
-    
+
     @Column(name = "is_enabled", nullable = false)
     var isEnabled: Boolean = true,
-    
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now()

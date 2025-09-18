@@ -1,7 +1,7 @@
-package com.aiva.notification.setting.dto
+package com.aiva.notification.domain.setting.dto
 
-import com.aiva.notification.setting.entity.NotificationPermissionType
-import com.aiva.notification.setting.entity.UserNotificationSetting
+import com.aiva.notification.domain.setting.entity.NotificationPermissionType
+import com.aiva.notification.domain.setting.entity.UserNotificationSetting
 import java.time.LocalDateTime
 import java.util.*
 

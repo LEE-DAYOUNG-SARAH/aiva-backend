@@ -1,6 +1,6 @@
-package com.aiva.notification.setting.repository
+package com.aiva.notification.domain.setting.repository
 
-import com.aiva.notification.setting.entity.NotificationConsentEvent
+import com.aiva.notification.domain.setting.entity.NotificationConsentEvent
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.*

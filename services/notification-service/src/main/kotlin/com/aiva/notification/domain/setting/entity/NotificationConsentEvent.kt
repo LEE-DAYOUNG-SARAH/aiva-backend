@@ -1,4 +1,4 @@
-package com.aiva.notification.setting.entity
+package com.aiva.notification.domain.setting.entity
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
