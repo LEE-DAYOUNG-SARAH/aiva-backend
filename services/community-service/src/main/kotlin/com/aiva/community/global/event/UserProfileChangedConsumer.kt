@@ -1,7 +1,7 @@
 package com.aiva.community.global.event
 
-import com.aiva.community.user.UserProfileProjection
-import com.aiva.community.user.UserProfileProjectionRepository
+import com.aiva.community.domain.user.UserProfileProjection
+import com.aiva.community.domain.user.UserProfileProjectionRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
  * 3. 실패 시 재시도 및 DLQ 처리
  */
 @Service
-class UserProfileChangedConsumer(
+class UserProfileChangedConsumer    (
     private val userProfileRepository: UserProfileProjectionRepository,
     private val objectMapper: ObjectMapper
 ) {
@@ -37,7 +37,7 @@ class UserProfileChangedConsumer(
     fun handleUserProfileChanged(
         @Payload message: String,
         @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
-        @Header(KafkaHeaders.RECEIVED_PARTITION_ID) partition: Int,
+        @Header(KafkaHeaders.RECEIVED_PARTITION) partition: Int,
         @Header(KafkaHeaders.OFFSET) offset: Long,
         acknowledgment: Acknowledgment?
     ) {
@@ -59,7 +59,7 @@ class UserProfileChangedConsumer(
             logger.info("Successfully processed user profile event for user: {}, version: {}", 
                        event.userId, event.version)
             
-        } catch (Exception e) {
+        } catch (e: Exception) {
             logger.error("Failed to process user profile changed event: $message", e)
             // 예외 발생 시 acknowledge 하지 않음 -> 재시도 또는 DLQ로 이동
             throw e

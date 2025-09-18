@@ -15,17 +15,16 @@ class CommunityPostUpdateService(
 ) {
 
     fun updatePost(postId: UUID, userId: UUID, request: UpdatePostRequest): UUID {
-        val post = communityPostReadService.getActivePostById(postId)
-        require(post.userId == userId) { "User can only update their own posts" }
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        require(postWithAuthor.post.userId == userId) { "User can only update their own posts" }
         
-        post.update(request.title, request.content)
+        postWithAuthor.post.update(request.title, request.content)
 
         communityPostImageService.update(postId, request.images)
         
         // 캐시 전략: 게시물 수정 시
         // 1. 수정된 게시물 캐시 갱신
-        // TODO: CommunityPostWithAuthor 로 변경 필요
-        cacheService.cachePost(post)
+        cacheService.cachePost(postWithAuthor)
         
         // 2. 최신순 목록만 무효화 (인기순은 배치에서 처리)
         // 수정은 좋아요/댑글수 영향 없으므로 최신순만 고려
@@ -35,10 +34,10 @@ class CommunityPostUpdateService(
     }
 
     fun deletePost(postId: UUID, userId: UUID): UUID {
-        val post = communityPostReadService.getActivePostById(postId)
-        require(post.userId == userId) { "User can only delete their own posts" }
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        require(postWithAuthor.post.userId == userId) { "User can only delete their own posts" }
 
-        post.delete()
+        postWithAuthor.post.delete()
         
         // 캐시 전략: 게시물 삭제 시
         // 1. 해당 게시물 캐시 삭제
@@ -50,49 +49,45 @@ class CommunityPostUpdateService(
         // 3. 최신순 버전 증가로 무효화 감지
         cacheService.incrementLatestListVersion()
 
-        return post.id
+        return postWithAuthor.post.id
     }
 
     fun incrementLikeCount(postId: UUID) {
-        val post = communityPostReadService.getActivePostById(postId)
-        post.incrementLikeCount()
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        postWithAuthor.post.incrementLikeCount()
         
         // 좋아요 수 변경 시 개별 게시물만 갱신
-        // TODO: CommunityPostWithAuthor 로 변경 필요
-        cacheService.cachePost(post)
+        cacheService.cachePost(postWithAuthor)
         
         // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
     }
 
     fun decrementLikeCount(postId: UUID) {
-        val post = communityPostReadService.getActivePostById(postId)
-        post.decrementLikeCount()
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        postWithAuthor.post.decrementLikeCount()
         
         // 좋아요 수 변경 시 개별 게시물만 갱신
-        // TODO: CommunityPostWithAuthor 로 변경 필요
-        cacheService.cachePost(post)
+        cacheService.cachePost(postWithAuthor)
         
         // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
     }
 
     fun incrementCommentCount(postId: UUID) {
-        val post = communityPostReadService.getActivePostById(postId)
-        post.incrementCommentCount()
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        postWithAuthor.post.incrementCommentCount()
         
         // 댓글 수 변경 시 개별 게시물만 갱신
-        // TODO: CommunityPostWithAuthor 로 변경 필요
-        cacheService.cachePost(post)
+        cacheService.cachePost(postWithAuthor)
         
         // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
     }
 
     fun decrementCommentCount(postId: UUID) {
-        val post = communityPostReadService.getActivePostById(postId)
-        post.decrementCommentCount()
+        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
+        postWithAuthor.post.decrementCommentCount()
         
         // 댓글 수 변경 시 개별 게시물만 갱신
-        // TODO: CommunityPostWithAuthor 로 변경 필요
-        cacheService.cachePost(post)
+        cacheService.cachePost(postWithAuthor)
         
         // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
     }

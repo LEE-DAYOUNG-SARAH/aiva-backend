@@ -15,10 +15,16 @@ import org.springframework.kafka.core.*
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonSerializer
+import org.springframework.kafka.listener.CommonErrorHandler
+import org.springframework.kafka.listener.DefaultErrorHandler
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.slf4j.LoggerFactory
 
 @Configuration
 @EnableKafka
 class KafkaConfig {
+    
+    private val logger = LoggerFactory.getLogger(KafkaConfig::class.java)
     
     @Value("\${spring.kafka.bootstrap-servers:localhost:9092}")
     private lateinit var bootstrapServers: String
@@ -60,10 +66,8 @@ class KafkaConfig {
         factory.setConcurrency(2) // 동시 처리 스레드 수
         
         // 에러 핸들링
-        factory.setCommonErrorHandler { exception, _ ->
-            // TODO: DLQ(Dead Letter Queue) 설정 또는 알림 시스템 연동
-            println("Kafka consumer error: ${exception.message}")
-        }
+        val errorHandler = DefaultErrorHandler()
+        factory.setCommonErrorHandler(errorHandler)
         
         return factory
     }
