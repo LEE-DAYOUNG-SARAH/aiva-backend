@@ -3,8 +3,6 @@ package com.aiva.user.user.service
 import com.aiva.user.auth.dto.AppLoginRequest
 import com.aiva.user.auth.dto.DeviceInfo
 import com.aiva.user.auth.dto.UserInfo
-import com.aiva.user.device.service.DeviceService
-import com.aiva.user.notification.service.NotificationSettingService
 import com.aiva.user.user.entity.Provider
 import com.aiva.user.user.entity.User
 import com.aiva.user.user.repository.UserRepository
@@ -18,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 class UserCreateService(
-    private val userRepository: UserRepository,
-    private val deviceService: DeviceService,
-    private val notificationSettingService: NotificationSettingService
+    private val userRepository: UserRepository
 ) {
     
     /**
@@ -57,11 +53,9 @@ class UserCreateService(
             )
         )
 
-        deviceService.createDevice(user.id, deviceInfo)
+        // TODO: 디바이스 정보는 notification-service에서 별도 처리 (Kafka 이벤트 또는 클라이언트 호출)
 
-        systemNotificationEnabled?.let {
-            notificationSettingService.createNotificationSetting(user.id, it)
-        }
+        // TODO: 알림 설정은 notification-service에서 별도 처리
 
         return user
     }
@@ -70,7 +64,7 @@ class UserCreateService(
      * 사용자 업데이트
      */
     private fun updateUser(user: User, deviceInfo: DeviceInfo): User {
-        deviceService.updateDevice(user.id, deviceInfo)
+        // TODO: 디바이스 정보 업데이트는 notification-service에서 별도 처리
         user.updateLastLogin()
 
         return user
