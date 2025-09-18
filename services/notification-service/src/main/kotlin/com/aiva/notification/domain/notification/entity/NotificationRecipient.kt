@@ -20,12 +20,6 @@ data class NotificationRecipient(
     @Column(name = "user_id", nullable = false)
     val userId: UUID,
 
-    @Column(name = "is_read", nullable = false)
-    var isRead: Boolean = false,
-
-    @Column(name = "read_at")
-    var readAt: LocalDateTime? = null,
-
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
@@ -40,9 +34,4 @@ data class NotificationRecipient(
         ]
     )
     companion object
-
-    fun markAsRead() {
-        isRead = true
-        readAt = LocalDateTime.now()
-    }
 }

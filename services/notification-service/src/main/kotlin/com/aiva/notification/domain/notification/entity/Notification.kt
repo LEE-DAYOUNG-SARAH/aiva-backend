@@ -30,6 +30,15 @@ data class Notification(
     @Column(name = "link_url", columnDefinition = "TEXT")
     val linkUrl: String? = null,
     
+    @Column(name = "user_id", nullable = false)
+    val userId: UUID,
+    
+    @Column(name = "is_read", nullable = false)
+    var isRead: Boolean = false,
+    
+    @Column(name = "read_at")
+    var readAt: LocalDateTime? = null,
+    
     @Column(name = "scheduled_at")
     val scheduledAt: LocalDateTime? = null,
     
@@ -46,7 +55,12 @@ data class Notification(
     
     @OneToMany(mappedBy = "notificationId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val recipients: List<NotificationRecipient> = mutableListOf()
-)
+) {
+    fun markAsRead() {
+        isRead = true
+        readAt = LocalDateTime.now()
+    }
+}
 
 enum class NotificationType {
     COMMUNITY_COMMENT,

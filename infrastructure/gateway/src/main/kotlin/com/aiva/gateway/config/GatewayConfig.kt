@@ -20,7 +20,9 @@ class GatewayConfig(
         return builder.routes()
             // User Service Routes (인증 포함)
             .route("user-service") { r ->
-                r.path("/api/users/**", "/api/children/**", "/api/devices/**", "/api/auth/**")
+                r.path("/api/users/**", "/api/children/**", "/api/auth/**")
+                    .and()
+                    .not { it.path("/api/users/notification-settings/**") }
                     .filters { f ->
                         f.stripPrefix(1)
                             .filter(jwtAuthenticationFilter.apply())
@@ -50,7 +52,7 @@ class GatewayConfig(
             
             // Notification Service Routes (모든 API 인증 필수)
             .route("notification-service") { r ->
-                r.path("/api/notifications/**", "/api/notification-settings/**")
+                r.path("/api/notifications/**", "/api/devices/**", "/api/users/notification-settings/**")
                     .filters { f ->
                         f.stripPrefix(1)
                             .filter(jwtAuthenticationFilter.apply())
