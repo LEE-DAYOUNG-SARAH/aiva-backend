@@ -1,6 +1,6 @@
-package com.aiva.notification.device.repository
+package com.aiva.notification.domain.fcm.repository
 
-import com.aiva.notification.device.entity.FcmToken
+import com.aiva.notification.domain.fcm.entity.FcmToken
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -12,25 +12,7 @@ interface FcmTokenRepository : JpaRepository<FcmToken, UUID> {
     fun findByUserDeviceIdAndIsActiveTrue(userDeviceId: UUID): FcmToken?
     fun findByFcmToken(fcmToken: String): FcmToken?
     
-    @Query("""
-        SELECT ft FROM FcmToken ft 
-        JOIN UserDevice ud ON ft.userDeviceId = ud.id 
-        WHERE ud.userId IN :userIds AND ft.isActive = true
-    """)
-    fun findActiveFcmTokensByUserIds(@Param("userIds") userIds: List<UUID>): List<FcmToken>
-    
-    @Query("""
-        SELECT new com.aiva.notification.consumer.FcmTokenDto(
-            ud.userId, 
-            ft.fcmToken, 
-            ud.deviceIdentifier, 
-            ft.isActive
-        )
-        FROM FcmToken ft 
-        JOIN UserDevice ud ON ft.userDeviceId = ud.id 
-        WHERE ud.userId IN :userIds AND ft.isActive = true
-    """)
-    fun findActiveFcmTokenDtosByUserIds(@Param("userIds") userIds: List<UUID>): List<com.aiva.notification.consumer.FcmTokenDto>
+    fun findByUserIdInAndIsActiveTrue(userIds: List<UUID>): List<FcmToken>
     
     @Query("""
         SELECT ft.fcmToken FROM FcmToken ft 

@@ -1,9 +1,9 @@
-package com.aiva.notification.device.controller
+package com.aiva.notification.domain.fcm.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.notification.device.dto.FcmTokenUpdateResponse
-import com.aiva.notification.device.dto.FcmTokenUpdateRequest
-import com.aiva.notification.device.service.DeviceFcmTokenService
+import com.aiva.notification.domain.fcm.dto.FcmTokenUpdateResponse
+import com.aiva.notification.domain.fcm.dto.FcmTokenUpdateRequest
+import com.aiva.notification.domain.fcm.service.DeviceFcmTokenService
 import com.aiva.security.annotation.CurrentUser
 import com.aiva.security.dto.UserPrincipal
 import jakarta.validation.Valid

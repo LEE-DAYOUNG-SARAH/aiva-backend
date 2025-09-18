@@ -1,6 +1,6 @@
-package com.aiva.notification.device.dto
+package com.aiva.notification.domain.fcm.dto
 
-import com.aiva.notification.device.entity.FcmToken
+import com.aiva.notification.domain.fcm.entity.FcmToken
 import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 import java.util.*

@@ -1,4 +1,4 @@
-package com.aiva.notification.device.entity
+package com.aiva.notification.domain.fcm.entity
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
@@ -13,23 +13,26 @@ import java.util.*
 data class FcmToken(
     @Id
     val id: UUID = UUID.randomUUID(),
-    
+
     @Column(name = "user_device_id", nullable = false)
     val userDeviceId: UUID,
     
+    @Column(name = "user_id", nullable = false)
+    val userId: UUID,
+
     @Column(name = "fcm_token", nullable = false, unique = true, columnDefinition = "TEXT")
     var fcmToken: String,
-    
+
     @Column(name = "last_validated_at")
     var lastValidatedAt: LocalDateTime? = null,
-    
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
-    
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now()

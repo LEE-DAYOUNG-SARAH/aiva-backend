@@ -1,10 +1,11 @@
-package com.aiva.notification.device.service
+package com.aiva.notification.domain.fcm.service
 
-import com.aiva.notification.device.dto.FcmTokenUpdateResponse
-import com.aiva.notification.device.dto.FcmTokenUpdateRequest
-import com.aiva.notification.device.entity.FcmToken
-import com.aiva.notification.device.entity.UserDevice
-import com.aiva.notification.device.repository.FcmTokenRepository
+import com.aiva.notification.domain.fcm.dto.FcmTokenUpdateResponse
+import com.aiva.notification.domain.fcm.dto.FcmTokenUpdateRequest
+import com.aiva.notification.domain.fcm.entity.FcmToken
+import com.aiva.notification.domain.device.entity.UserDevice
+import com.aiva.notification.domain.device.service.DeviceService
+import com.aiva.notification.domain.fcm.repository.FcmTokenRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -76,6 +77,7 @@ class DeviceFcmTokenService(
         val newFcmToken = fcmTokenRepository.save(
             FcmToken(
                 userDeviceId = device.id,
+                userId = device.userId,
                 fcmToken = newToken,
                 lastValidatedAt = LocalDateTime.now()
             )
