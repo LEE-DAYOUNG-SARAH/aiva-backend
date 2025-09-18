@@ -1,6 +1,6 @@
-package com.aiva.notification.repository
+package com.aiva.notification.domain.notification.repository
 
-import com.aiva.notification.entity.Notification
+import com.aiva.notification.domain.notification.entity.Notification
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository

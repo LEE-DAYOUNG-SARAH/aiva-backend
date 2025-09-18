@@ -1,9 +1,9 @@
-package com.aiva.notification.service
+package com.aiva.notification.domain.notification.service
 
-import com.aiva.notification.dto.NotificationListResponse
-import com.aiva.notification.dto.NotificationResponse
-import com.aiva.notification.dto.ReadAllResponse
-import com.aiva.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.dto.NotificationListResponse
+import com.aiva.notification.domain.notification.dto.NotificationResponse
+import com.aiva.notification.domain.notification.dto.ReadAllResponse
+import com.aiva.notification.domain.notification.repository.NotificationRepository
 import mu.KotlinLogging
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service

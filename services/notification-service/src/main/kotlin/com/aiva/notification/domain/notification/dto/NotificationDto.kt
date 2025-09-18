@@ -1,6 +1,6 @@
-package com.aiva.notification.dto
+package com.aiva.notification.domain.notification.dto
 
-import com.aiva.notification.entity.NotificationType
+import com.aiva.notification.domain.notification.entity.NotificationType
 import java.time.LocalDateTime
 import java.util.*
 

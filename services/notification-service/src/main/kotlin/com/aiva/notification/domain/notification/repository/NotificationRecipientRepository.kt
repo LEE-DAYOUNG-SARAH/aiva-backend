@@ -1,6 +1,6 @@
-package com.aiva.notification.repository
+package com.aiva.notification.domain.notification.repository
 
-import com.aiva.notification.entity.NotificationRecipient
+import com.aiva.notification.domain.notification.entity.NotificationRecipient
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query

@@ -1,12 +1,11 @@
-package com.aiva.notification.controller
+package com.aiva.notification.domain.notification.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.notification.dto.NotificationListResponse
-import com.aiva.notification.dto.ReadAllResponse
-import com.aiva.notification.service.NotificationService
+import com.aiva.notification.domain.notification.dto.NotificationListResponse
+import com.aiva.notification.domain.notification.dto.ReadAllResponse
+import com.aiva.notification.domain.notification.service.NotificationService
 import com.aiva.security.annotation.CurrentUser
 import com.aiva.security.dto.UserPrincipal
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.util.*

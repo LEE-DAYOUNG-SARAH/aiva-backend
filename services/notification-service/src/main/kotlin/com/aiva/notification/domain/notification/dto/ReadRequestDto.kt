@@ -1,4 +1,4 @@
-package com.aiva.notification.dto
+package com.aiva.notification.domain.notification.dto
 
 data class ReadAllRequest(
     val beforeDate: String? = null // ISO 8601 format (optional)

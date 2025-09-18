@@ -1,4 +1,4 @@
-package com.aiva.notification.service
+package com.aiva.notification.domain.notification.service
 
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
@@ -44,21 +44,16 @@ class FcmService(
             
             val message = messageBuilder.build()
             
-            val future = CompletableFuture<String>()
-            
-            firebaseMessaging.sendAsync(message)
-                .addCallback(
-                    { result ->
-                        logger.info { "FCM message sent successfully: $result" }
-                        future.complete(result)
-                    },
-                    { exception ->
-                        logger.error(exception) { "Failed to send FCM message to token: $fcmToken" }
-                        future.completeExceptionally(exception)
-                    }
-                )
-            
-            future
+            CompletableFuture.supplyAsync {
+                try {
+                    val result = firebaseMessaging.send(message)
+                    logger.info { "FCM message sent successfully: $result" }
+                    result
+                } catch (e: Exception) {
+                    logger.error(e) { "Failed to send FCM message to token: $fcmToken" }
+                    throw e
+                }
+            }
         } catch (e: Exception) {
             logger.error(e) { "Error creating FCM message for token: $fcmToken" }
             CompletableFuture.failedFuture(e)
@@ -74,7 +69,7 @@ class FcmService(
         data: Map<String, String> = emptyMap()
     ): CompletableFuture<List<String>> {
         val futures = tokens.map { token ->
-            sendNotification(token, title, body, imageUrl, linkUrl, data)
+            sendNotification(fcmToken = token, title = title, body = body, imageUrl = imageUrl, linkUrl = linkUrl, data = data)
         }
         
         return CompletableFuture.allOf(*futures.toTypedArray())
