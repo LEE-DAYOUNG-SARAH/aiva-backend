@@ -23,12 +23,20 @@ community:
   kafka:
     topics:
       user-profile-changed: user.profile.changed
+      notification: community.notification
     consumer:
       concurrency: 2
       batch-size: 10
       retry:
         attempts: 3
         backoff-ms: 1000
+    producer:
+      notification:
+        partitions: 3
+        replication-factor: 1
+        retries: 3
+        batch-size: 16384
+        linger-ms: 5
 
 # Profile별 환경 설정
 ---

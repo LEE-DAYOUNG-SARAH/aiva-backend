@@ -16,7 +16,15 @@
       "mcp__morphllm-fast-apply__read_multiple_files",
       "mcp__morphllm-fast-apply__search_files",
       "Bash(git reset:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)",
+      "Read(/Users/dayoung/Library/**)"
     ],
     "deny": [],
     "ask": []
