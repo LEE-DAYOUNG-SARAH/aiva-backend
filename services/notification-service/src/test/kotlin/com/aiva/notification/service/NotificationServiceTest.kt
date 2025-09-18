@@ -1,10 +1,9 @@
 package com.aiva.notification.service
 
-import com.aiva.notification.entity.Notification
-import com.aiva.notification.entity.NotificationRecipient
-import com.aiva.notification.entity.NotificationType
-import com.aiva.notification.repository.NotificationRecipientRepository
-import com.aiva.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.entity.Notification
+import com.aiva.notification.domain.notification.entity.NotificationType
+import com.aiva.notification.domain.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.service.NotificationService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,17 +18,12 @@ import java.util.*
 class NotificationServiceTest {
     
     private lateinit var notificationRepository: NotificationRepository
-    private lateinit var notificationRecipientRepository: NotificationRecipientRepository
     private lateinit var notificationService: NotificationService
     
     @BeforeEach
     fun setUp() {
         notificationRepository = mockk()
-        notificationRecipientRepository = mockk()
-        notificationService = NotificationService(
-            notificationRepository,
-            notificationRecipientRepository
-        )
+        notificationService = NotificationService(notificationRepository)
     }
     
     @Test
@@ -41,17 +35,12 @@ class NotificationServiceTest {
         
         val notification = Notification(
             id = notificationId,
+            userId = userId,
             type = NotificationType.COMMUNITY_COMMENT,
             title = "Test Title",
             body = "Test Body",
-            createdAt = now.minusDays(10),
-            updatedAt = now.minusDays(10)
-        )
-        
-        val recipient = NotificationRecipient(
-            notificationId = notificationId,
-            userId = userId,
             isRead = false,
+            readAt = null,
             createdAt = now.minusDays(10),
             updatedAt = now.minusDays(10)
         )
@@ -60,19 +49,12 @@ class NotificationServiceTest {
         val pageable = PageRequest.of(0, 20)
         
         every { 
-            notificationRepository.findByUserIdAndCreatedAtAfter(
+            notificationRepository.findByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(
                 userId, 
                 any<LocalDateTime>(), 
                 pageable
             ) 
         } returns page
-        
-        every { 
-            notificationRecipientRepository.findByUserIdAndNotificationIds(
-                userId, 
-                listOf(notificationId)
-            ) 
-        } returns listOf(recipient)
         
         every { 
             notificationRepository.countByUserIdAndCreatedAtAfter(
@@ -93,13 +75,13 @@ class NotificationServiceTest {
     }
     
     @Test
-    fun `markAsRead should update notification recipient`() {
+    fun `markAsRead should update notification`() {
         // Given
         val notificationId = UUID.randomUUID()
         val userId = UUID.randomUUID()
         
         every { 
-            notificationRecipientRepository.markAsRead(
+            notificationRepository.markAsRead(
                 notificationId,
                 userId,
                 any<LocalDateTime>()
@@ -111,7 +93,7 @@ class NotificationServiceTest {
         
         // Then
         verify { 
-            notificationRecipientRepository.markAsRead(
+            notificationRepository.markAsRead(
                 notificationId,
                 userId,
                 any<LocalDateTime>()

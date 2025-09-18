@@ -1,9 +1,10 @@
 package com.aiva.notification.controller
 
-import com.aiva.notification.dto.NotificationListResponse
-import com.aiva.notification.dto.NotificationResponse
-import com.aiva.notification.entity.NotificationType
-import com.aiva.notification.service.NotificationService
+import com.aiva.notification.domain.notification.controller.NotificationController
+import com.aiva.notification.domain.notification.dto.NotificationListResponse
+import com.aiva.notification.domain.notification.dto.NotificationResponse
+import com.aiva.notification.domain.notification.entity.NotificationType
+import com.aiva.notification.domain.notification.service.NotificationService
 import com.aiva.security.dto.UserPrincipal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean

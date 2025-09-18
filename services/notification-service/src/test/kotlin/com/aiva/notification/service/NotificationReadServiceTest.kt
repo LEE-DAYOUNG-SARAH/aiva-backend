@@ -1,7 +1,8 @@
 package com.aiva.notification.service
 
-import com.aiva.notification.dto.ReadAllRequest
-import com.aiva.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.repository.NotificationRecipientRepository
+import com.aiva.notification.domain.notification.service.NotificationService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -14,30 +15,31 @@ import java.util.*
 class NotificationReadServiceTest {
     
     private lateinit var notificationRepository: NotificationRepository
+    private lateinit var notificationRecipientRepository: NotificationRecipientRepository
     private lateinit var notificationService: NotificationService
     
     @BeforeEach
     fun setUp() {
         notificationRepository = mockk()
-        notificationService = NotificationService(notificationRepository)
+        notificationRecipientRepository = mockk()
+        notificationService = NotificationService(notificationRepository, notificationRecipientRepository)
     }
     
     @Test
     fun `markAllAsRead should mark all unread notifications as read`() {
         // Given
         val userId = UUID.randomUUID()
-        val request = ReadAllRequest()
         
         every { 
             notificationRepository.markAllAsRead(
                 userId, 
                 any<LocalDateTime>(), 
-                null
+                any<LocalDateTime>()
             ) 
         } returns 5
         
         // When
-        val result = notificationService.markAllAsRead(request, userId)
+        val result = notificationService.markAllAsRead(userId)
         
         // Then
         assertEquals(5, result.readCount)
@@ -46,17 +48,15 @@ class NotificationReadServiceTest {
             notificationRepository.markAllAsRead(
                 userId, 
                 any<LocalDateTime>(), 
-                null
+                any<LocalDateTime>()
             ) 
         }
     }
     
     @Test
-    fun `markAllAsRead should respect beforeDate parameter`() {
+    fun `markAllAsRead should use one month ago as beforeDate`() {
         // Given
         val userId = UUID.randomUUID()
-        val beforeDateStr = "2024-01-01T00:00:00"
-        val request = ReadAllRequest(beforeDate = beforeDateStr)
         
         every { 
             notificationRepository.markAllAsRead(
@@ -67,7 +67,7 @@ class NotificationReadServiceTest {
         } returns 3
         
         // When
-        val result = notificationService.markAllAsRead(request, userId)
+        val result = notificationService.markAllAsRead(userId)
         
         // Then
         assertEquals(3, result.readCount)
