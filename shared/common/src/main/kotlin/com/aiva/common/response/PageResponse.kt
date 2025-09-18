@@ -43,5 +43,9 @@ data class PageResponse<T>(
                 currentPage = pageable.pageNumber
             )
         }
+
+        fun <R> empty(pageable: Pageable): PageResponse<R> =
+            PageResponse(emptyList(), 0, 1, pageable.pageNumber)
+
     }
 }
