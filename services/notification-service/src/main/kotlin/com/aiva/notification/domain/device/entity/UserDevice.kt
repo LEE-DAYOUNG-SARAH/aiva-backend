@@ -1,4 +1,4 @@
-package com.aiva.notification.device.entity
+package com.aiva.notification.domain.device.entity
 
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
@@ -13,36 +13,36 @@ import java.util.*
 data class UserDevice(
     @Id
     val id: UUID = UUID.randomUUID(),
-    
+
     @Column(name = "user_id", nullable = false)
     val userId: UUID,
-    
+
     @Column(name = "device_identifier", nullable = false, length = 255)
     val deviceIdentifier: String,
-    
+
     @Column(name = "platform", nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     val platform: Platform,
-    
+
     @Column(name = "device_model", length = 100)
     var deviceModel: String? = null,
-    
+
     @Column(name = "os_version", length = 50)
     var osVersion: String? = null,
-    
+
     @Column(name = "app_version", nullable = false, length = 50)
     var appVersion: String,
-    
+
     @Column(name = "last_seen_at", nullable = false)
     var lastSeenAt: LocalDateTime = LocalDateTime.now(),
-    
+
     @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
-    
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now()

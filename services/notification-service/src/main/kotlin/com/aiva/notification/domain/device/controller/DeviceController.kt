@@ -1,9 +1,9 @@
-package com.aiva.notification.device.controller
+package com.aiva.notification.domain.device.controller
 
 import com.aiva.common.response.ApiResponse
-import com.aiva.notification.device.dto.DeviceUpdateResponse
-import com.aiva.notification.device.dto.DeviceUpdateRequest
-import com.aiva.notification.device.service.DeviceService
+import com.aiva.notification.domain.device.dto.DeviceUpdateResponse
+import com.aiva.notification.domain.device.dto.DeviceUpdateRequest
+import com.aiva.notification.domain.device.service.DeviceService
 import com.aiva.security.annotation.CurrentUser
 import com.aiva.security.dto.UserPrincipal
 import jakarta.validation.Valid

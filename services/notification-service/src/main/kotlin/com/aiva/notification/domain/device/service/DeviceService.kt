@@ -1,11 +1,11 @@
-package com.aiva.notification.device.service
+package com.aiva.notification.domain.device.service
 
-import com.aiva.notification.device.dto.DeviceInfo
-import com.aiva.notification.device.dto.DeviceUpdateResponse
-import com.aiva.notification.device.dto.DeviceUpdateRequest
-import com.aiva.notification.device.entity.Platform
-import com.aiva.notification.device.entity.UserDevice
-import com.aiva.notification.device.repository.UserDeviceRepository
+import com.aiva.notification.domain.device.dto.DeviceInfo
+import com.aiva.notification.domain.device.dto.DeviceUpdateResponse
+import com.aiva.notification.domain.device.dto.DeviceUpdateRequest
+import com.aiva.notification.domain.device.entity.Platform
+import com.aiva.notification.domain.device.entity.UserDevice
+import com.aiva.notification.domain.device.repository.UserDeviceRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*

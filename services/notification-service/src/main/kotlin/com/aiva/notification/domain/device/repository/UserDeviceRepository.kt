@@ -1,6 +1,6 @@
-package com.aiva.notification.device.repository
+package com.aiva.notification.domain.device.repository
 
-import com.aiva.notification.device.entity.UserDevice
+import com.aiva.notification.domain.device.entity.UserDevice
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

@@ -1,4 +1,4 @@
-package com.aiva.notification.device.dto
+package com.aiva.notification.domain.device.dto
 
 data class DeviceInfo(
     val deviceIdentifier: String,   // 디바이스 고유 식별자

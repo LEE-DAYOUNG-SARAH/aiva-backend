@@ -1,4 +1,4 @@
-package com.aiva.notification.device.dto
+package com.aiva.notification.domain.device.dto
 
 import jakarta.validation.constraints.Size
 
