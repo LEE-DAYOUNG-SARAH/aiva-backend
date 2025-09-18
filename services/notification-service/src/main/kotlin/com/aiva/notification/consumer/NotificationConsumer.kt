@@ -1,17 +1,15 @@
 package com.aiva.notification.consumer
 
-import com.aiva.notification.dto.CommunityNotificationEvent
-import com.aiva.notification.entity.Notification
-import com.aiva.notification.entity.NotificationRecipient
-import com.aiva.notification.repository.NotificationRepository
-import com.aiva.notification.repository.NotificationRecipientRepository
-import com.aiva.notification.service.FcmService
+import com.aiva.notification.domain.notification.dto.CommunityNotificationEvent
+import com.aiva.notification.domain.notification.entity.Notification
+import com.aiva.notification.domain.notification.entity.NotificationRecipient
+import com.aiva.notification.domain.notification.repository.NotificationRepository
+import com.aiva.notification.domain.notification.repository.NotificationRecipientRepository
+import com.aiva.notification.domain.notification.service.FcmService
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.*
 
@@ -31,87 +29,96 @@ class NotificationConsumer(
         groupId = "notification-service-group",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    @Transactional
     fun handleCommunityNotification(message: String) {
-        try {
+        val event = runCatching {
             logger.info { "Received community notification: $message" }
-            
-            val event = objectMapper.readValue(message, CommunityNotificationEvent::class.java)
-            
-            // 1. 알림 저장
-            val notification = Notification(
-                id = event.notificationId,
+            objectMapper.readValue(message, CommunityNotificationEvent::class.java)
+        }.getOrElse { e ->
+            logger.error(e) { "Failed to parse community notification: $message" }
+            throw e
+        }
+        
+        // 알림 저장
+        val savedNotifications = saveNotifications(event)
+        
+        // FCM 발송 (notificationId 포함)
+        sendFcmNotifications(event, savedNotifications)
+    }
+    
+    private fun saveNotifications(event: CommunityNotificationEvent): List<Notification> = runCatching {
+        val notifications = event.targetUserIds.map { userId ->
+            Notification(
+                id = UUID.randomUUID(),
+                userId = userId,
                 type = event.type,
                 title = event.title,
                 body = event.body,
                 imageUrl = event.imageUrl,
                 linkUrl = event.linkUrl,
+                isRead = false,
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now()
             )
-            
-            val savedNotification = notificationRepository.save(notification)
-            logger.info { "Saved notification: ${savedNotification.id}" }
-            
-            // 2. 수신자 저장
-            val recipients = event.targetUserIds.map { userId ->
-                NotificationRecipient(
-                    notificationId = savedNotification.id,
-                    userId = userId,
-                    isRead = false,
-                    createdAt = LocalDateTime.now(),
-                    updatedAt = LocalDateTime.now()
-                )
-            }
-            
-            notificationRecipientRepository.saveAll(recipients)
-            logger.info { "Saved ${recipients.size} notification recipients" }
-            
-            // 3. FCM 토큰 조회 및 발송
-            sendFcmNotifications(event, savedNotification.id)
-            
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to process community notification: $message" }
-            throw e // 재시도를 위해 예외를 다시 던짐
         }
-    }
+        
+        val saved = notificationRepository.saveAll(notifications)
+        logger.info { "Saved ${saved.size} notifications for users: ${event.targetUserIds}" }
+        saved
+    }.onFailure { e ->
+        logger.error(e) { "Failed to save notifications for users: ${event.targetUserIds}" }
+        throw e
+    }.getOrThrow()
     
-    private fun sendFcmNotifications(event: CommunityNotificationEvent, notificationId: UUID) {
-        try {
-            // FCM 토큰 조회
-            val fcmTokens = fcmTokenService.getActiveFcmTokensByUserIds(event.targetUserIds)
-            
-            if (fcmTokens.isEmpty()) {
-                logger.warn { "No FCM tokens found for users: ${event.targetUserIds}" }
-                return
-            }
-            
-            logger.info { "Found ${fcmTokens.size} FCM tokens for notification ${notificationId}" }
-            
-            // 배치 발송
-            val additionalData = mapOf(
-                "notificationId" to notificationId.toString(),
-                "type" to event.type.name
-            )
-            
-            fcmService.sendBatchNotifications(
-                tokens = fcmTokens.map { it.token },
-                title = event.title,
-                body = event.body,
-                imageUrl = event.imageUrl,
-                linkUrl = event.linkUrl,
-                data = additionalData
-            ).whenComplete { results, exception ->
-                if (exception != null) {
-                    logger.error(exception) { "Failed to send FCM notifications for notification $notificationId" }
-                } else {
-                    logger.info { "Successfully sent ${results.size} FCM notifications for notification $notificationId" }
-                }
-            }
-            
-        } catch (e: Exception) {
-            logger.error(e) { "Error sending FCM notifications for notification $notificationId" }
+    private fun sendFcmNotifications(event: CommunityNotificationEvent, savedNotifications: List<Notification>) = runCatching {
+        val fcmTokens = fcmTokenService.getActiveFcmTokensByUserIds(event.targetUserIds)
+        
+        if (fcmTokens.isEmpty()) {
+            logger.warn { "No FCM tokens found for users: ${event.targetUserIds}" }
+            return@runCatching
         }
+        
+        logger.info { "Found ${fcmTokens.size} FCM tokens for ${event.targetUserIds.size} users" }
+        
+        // userId별 notificationId 매핑
+        val userNotificationMap = savedNotifications.associateBy { it.userId }
+        
+        // 각 FCM 토큰별로 NotificationRecipient 생성 및 FCM 발송
+        val recipients = fcmTokens.mapNotNull { fcmToken ->
+            val notification = userNotificationMap[fcmToken.userId] ?: return@mapNotNull null
+            
+            runCatching {
+                // NotificationRecipient 생성
+                val recipient = NotificationRecipient(
+                    notificationId = notification.id,
+                    userId = fcmToken.userId
+                )
+                
+                // FCM 발송
+                fcmService.sendNotification(
+                    fcmToken = fcmToken.token,
+                    title = event.title,
+                    body = event.body,
+                    imageUrl = event.imageUrl,
+                    linkUrl = event.linkUrl,
+                    data = mapOf(
+                        "type" to event.type.name,
+                        "notificationId" to notification.id.toString()
+                    )
+                )
+                
+                recipient
+            }.onFailure { e ->
+                logger.warn(e) { "Failed to send FCM to token: ${fcmToken.token}, user: ${fcmToken.userId}" }
+            }.getOrNull()
+        }
+        
+        // NotificationRecipient 일괄 저장
+        notificationRecipientRepository.saveAll(recipients)
+        
+        logger.info { "Sent FCM notifications with notificationIds for ${fcmTokens.size} tokens" }
+        
+    }.onFailure { e ->
+        logger.error(e) { "Error sending FCM notifications for community event" }
     }
 }
 
