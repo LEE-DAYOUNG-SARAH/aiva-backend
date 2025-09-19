@@ -3,7 +3,8 @@ package com.aiva.community.global.cache
 import com.aiva.community.domain.post.entity.CommunityPost
 import com.aiva.community.domain.post.dto.CommunityPostWithAuthor
 import com.aiva.common.redis.entity.CommunityPostCache
-import com.aiva.common.redis.repository.CommunityPostRedisRepository
+import com.aiva.common.redis.repository.CommunityPostCacheRepository
+import com.aiva.common.redis.service.RedisCommunityService
 import com.aiva.community.global.cache.toCommunityPost
 import com.aiva.community.global.cache.toCommunityPostCache
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -15,9 +16,10 @@ import java.util.*
 
 @Service
 class CommunityPostCacheService(
-    private val redisTemplate: RedisTemplate<String, String>,
+    private val redisTemplate: RedisTemplate<String, Any>,
     private val objectMapper: ObjectMapper,
-    private val communityPostRedisRepository: CommunityPostRedisRepository
+    private val redisCommunityService: RedisCommunityService,
+    private val communityPostCacheRepository: CommunityPostCacheRepository
 ) {
     
     private val logger = LoggerFactory.getLogger(CommunityPostCacheService::class.java)
@@ -49,7 +51,8 @@ class CommunityPostCacheService(
      */
     fun cachePost(postWithAuthor: CommunityPostWithAuthor) {
         try {
-            communityPostRedisRepository.save(postWithAuthor.toCommunityPostCache())
+            val postCache = postWithAuthor.toCommunityPostCache()
+            communityPostCacheRepository.save(postCache)
             logger.debug("Cached post with author: {}", postWithAuthor.post.id)
         } catch (e: Exception) {
             logger.error("Failed to cache post with author: ${postWithAuthor.post.id}", e)
@@ -62,7 +65,7 @@ class CommunityPostCacheService(
      */
     fun getCachedPostWithAuthor(postId: UUID): CommunityPostCache? {
         return try {
-            communityPostRedisRepository.findById(postId).orElse(null)
+            communityPostCacheRepository.findById(postId).orElse(null)
         } catch (e: Exception) {
             logger.error("Failed to get cached post with author: $postId", e)
             null
@@ -76,7 +79,7 @@ class CommunityPostCacheService(
             redisTemplate.delete(key)
             
             // 새로운 방식 삭제
-            communityPostRedisRepository.deleteById(postId)
+            communityPostCacheRepository.deleteById(postId)
             
             logger.debug("Evicted post: {}", postId)
         } catch (e: Exception) {
@@ -104,7 +107,7 @@ class CommunityPostCacheService(
             val key = "$LATEST_LIST_PREFIX$page"
             val postIdsJson = redisTemplate.opsForValue().get(key)
             postIdsJson?.let {
-                objectMapper.readValue(it, objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
+                objectMapper.readValue(it.toString(), objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
             }
         } catch (e: Exception) {
             logger.error("Failed to get cached latest post list page: $page", e)
@@ -140,7 +143,7 @@ class CommunityPostCacheService(
             val key = "$POPULAR_LIST_PREFIX$page"
             val postIdsJson = redisTemplate.opsForValue().get(key)
             postIdsJson?.let {
-                objectMapper.readValue(it, objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
+                objectMapper.readValue(it.toString(), objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
             }
         } catch (e: Exception) {
             logger.error("Failed to get cached popular post list page: $page", e)
@@ -175,7 +178,7 @@ class CommunityPostCacheService(
     
     fun getLatestListVersion(): Long {
         return try {
-            val version = redisTemplate.opsForValue().get(LATEST_LIST_VERSION_KEY)?.toLongOrNull() ?: 0L
+            val version = redisTemplate.opsForValue().get(LATEST_LIST_VERSION_KEY)?.toString()?.toLongOrNull() ?: 0L
             logger.debug("Current latest list version: {}", version)
             version
         } catch (e: Exception) {
@@ -199,7 +202,7 @@ class CommunityPostCacheService(
     
     fun getPopularListVersion(): Long {
         return try {
-            val version = redisTemplate.opsForValue().get(POPULAR_LIST_VERSION_KEY)?.toLongOrNull() ?: 0L
+            val version = redisTemplate.opsForValue().get(POPULAR_LIST_VERSION_KEY)?.toString()?.toLongOrNull() ?: 0L
             logger.debug("Current popular list version: {}", version)
             version
         } catch (e: Exception) {
@@ -223,7 +226,7 @@ class CommunityPostCacheService(
             }
             
             if (postCaches.isNotEmpty()) {
-                communityPostRedisRepository.saveAll(postCaches)
+                communityPostCacheRepository.saveAll(postCaches)
                 logger.debug("Bulk cached {} posts using repository", posts.size)
             }
         } catch (e: Exception) {
@@ -238,7 +241,7 @@ class CommunityPostCacheService(
         val result = mutableMapOf<UUID, CommunityPost>()
         
         try {
-            val cachedPosts = communityPostRedisRepository.findAllById(postIds)
+            val cachedPosts = communityPostCacheRepository.findAllById(postIds)
             
             cachedPosts.forEach { cachedPost ->
                 result[cachedPost.id] = cachedPost.toCommunityPost()
@@ -257,7 +260,7 @@ class CommunityPostCacheService(
      */
     fun getLatestPostsFromCache(limit: Int = 20): List<CommunityPost> {
         return try {
-            communityPostRedisRepository.findAllByOrderByCreatedAtDesc()
+            communityPostCacheRepository.findAllByOrderByCreatedAtDesc()
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
@@ -271,7 +274,7 @@ class CommunityPostCacheService(
      */
     fun getPopularPostsFromCache(limit: Int = 20): List<CommunityPost> {
         return try {
-            communityPostRedisRepository.findAllByOrderByLikeCountDescCreatedAtDesc()
+            communityPostCacheRepository.findAllByOrderByLikeCountDescCreatedAtDesc()
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
@@ -285,7 +288,7 @@ class CommunityPostCacheService(
      */
     fun getUserPostsFromCache(authorId: UUID, limit: Int = 20): List<CommunityPost> {
         return try {
-            communityPostRedisRepository.findByAuthorId(authorId)
+            communityPostCacheRepository.findByAuthorId(authorId)
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
@@ -299,7 +302,7 @@ class CommunityPostCacheService(
      */
     fun getCachedPostsCount(): Long {
         return try {
-            communityPostRedisRepository.count()
+            communityPostCacheRepository.count()
         } catch (e: Exception) {
             logger.error("Failed to get cached posts count", e)
             0L
@@ -322,7 +325,7 @@ class CommunityPostCacheService(
             
             // 2. 개별 게시물들을 캐시에 일괄 저장
             val postCaches = postsWithAuthors.map { it.toCommunityPostCache() }
-            communityPostRedisRepository.saveAll(postCaches)
+            communityPostCacheRepository.saveAll(postCaches)
             
             // 3. 페이지별로 목록 업데이트
             val pageSize = 20 // 기본 페이지 크기

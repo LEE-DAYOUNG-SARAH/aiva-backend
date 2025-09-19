@@ -35,8 +35,3 @@ data class Message(
     @OneToMany(mappedBy = "messageId", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val sources: List<MessageSource> = emptyList()
 )
-
-enum class MessageRole {
-    USER,
-    ASSISTANT
-}

@@ -1,32 +1,50 @@
-package com.aiva.common.redis
+package com.aiva.common.redis.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.data.redis.serializer.StringRedisSerializer
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.StringRedisSerializer
 
-/**
- * Redis 설정
- * 모든 서비스에서 동일한 Redis 설정 사용
- */
 @Configuration
-@EnableRedisRepositories(basePackages = ["com.aiva.common.redis.repository"])
+@EnableRedisRepositories(basePackages = ["com.aiva.common.redis.entity"])
 class RedisConfig {
-    
+
     @Bean
-    fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, String> {
-        val template = RedisTemplate<String, String>()
+    @ConditionalOnMissingBean
+    fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, Any> {
+        val template = RedisTemplate<String, Any>()
         template.connectionFactory = connectionFactory
         
-        // 키와 값 모두 String 직렬화 사용
+        // String serializer for keys
         template.keySerializer = StringRedisSerializer()
-        template.valueSerializer = StringRedisSerializer()
         template.hashKeySerializer = StringRedisSerializer()
-        template.hashValueSerializer = StringRedisSerializer()
+        
+        // JSON serializer for values
+        template.valueSerializer = jsonRedisSerializer()
+        template.hashValueSerializer = jsonRedisSerializer()
         
         template.afterPropertiesSet()
         return template
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    fun redisObjectMapper(): ObjectMapper {
+        return ObjectMapper().apply {
+            registerModule(KotlinModule.Builder().build())
+            registerModule(JavaTimeModule())
+            findAndRegisterModules()
+        }
+    }
+
+    private fun jsonRedisSerializer(): GenericJackson2JsonRedisSerializer {
+        return GenericJackson2JsonRedisSerializer(redisObjectMapper())
     }
 }

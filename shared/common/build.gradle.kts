@@ -5,6 +5,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-data-redis")
     api("org.springframework.boot:spring-boot-starter-webflux") // WebClient 지원 추가
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     
     // OpenAPI 문서화
     api("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")

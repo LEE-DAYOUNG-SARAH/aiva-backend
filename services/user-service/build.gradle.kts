@@ -10,7 +10,6 @@ dependencies {
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     
     // Database
     implementation("mysql:mysql-connector-java:8.0.33")
