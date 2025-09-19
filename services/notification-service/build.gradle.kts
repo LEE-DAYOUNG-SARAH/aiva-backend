@@ -15,9 +15,6 @@ dependencies {
     // Kafka
     implementation("org.springframework.kafka:spring-kafka")
     
-    // AWS SDK
-    implementation("software.amazon.awssdk:sns:2.21.1")
-    implementation("software.amazon.awssdk:sqs:2.21.1")
     
     // FCM
     implementation("com.google.firebase:firebase-admin:9.2.0")

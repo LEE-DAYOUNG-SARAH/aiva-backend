@@ -41,7 +41,6 @@ CREATE TABLE notification_jobs (
     enqueue_status ENUM('PENDING', 'ENQUEUED', 'SKIPPED', 'FAILED') NOT NULL DEFAULT 'PENDING',
     delivery_status ENUM('QUEUED', 'SENT', 'DELIVERED', 'FAILED') NOT NULL DEFAULT 'QUEUED',
     attempt_count INT NOT NULL DEFAULT 0,
-    sns_message_id VARCHAR(100) NULL,
     provider_message_id VARCHAR(100) NULL,
     enqueued_at TIMESTAMP NULL,
     first_sent_at TIMESTAMP NULL,

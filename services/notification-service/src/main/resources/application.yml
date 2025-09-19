@@ -68,12 +68,6 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-aws:
-  region: ap-northeast-2
-  sns:
-    topic-arn: ${AWS_SNS_TOPIC_ARN:arn:aws:sns:ap-northeast-2:123456789012:aiva-notifications-dev}
-  sqs:
-    queue-url: ${AWS_SQS_QUEUE_URL:https://sqs.ap-northeast-2.amazonaws.com/123456789012/aiva-notification-queue-dev}
 
 firebase:
   config:
