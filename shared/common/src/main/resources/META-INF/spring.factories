@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.aiva.common.redis.config.RedisAutoConfiguration
+com.aiva.common.redis.config.RedisAutoConfiguration,\
+com.aiva.common.kafka.config.CommonKafkaConfig

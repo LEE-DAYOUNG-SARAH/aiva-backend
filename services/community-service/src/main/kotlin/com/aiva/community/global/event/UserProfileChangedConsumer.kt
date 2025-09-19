@@ -29,9 +29,10 @@ class UserProfileChangedConsumer    (
     private val logger = LoggerFactory.getLogger(UserProfileChangedConsumer::class.java)
     
     @KafkaListener(
-        topics = [UserProfileChangedEvent.TOPIC_NAME],
-        groupId = UserProfileChangedEvent.CONSUMER_GROUP,
-        containerFactory = "kafkaListenerContainerFactory"
+        topics = ["\${app.kafka.topics.user-profile-changed.name:user.profile.changed}"],
+        groupId = "\${app.kafka.topics.user-profile-changed.consumer-group:community-service-group}",
+        containerFactory = "kafkaListenerContainerFactory",
+        errorHandler = "kafkaErrorHandler"
     )
     @Transactional
     fun handleUserProfileChanged(

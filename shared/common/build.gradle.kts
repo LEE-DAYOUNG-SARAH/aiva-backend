@@ -4,6 +4,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-actuator")
     api("org.springframework.boot:spring-boot-starter-data-redis")
     api("org.springframework.boot:spring-boot-starter-webflux") // WebClient 지원 추가
+    api("org.springframework.kafka:spring-kafka") // Kafka 지원 추가
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
     api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     
