@@ -32,16 +32,16 @@ AIVA는 부모를 위한 **AI 육아 비서**입니다.
 ```
 aiva-backend/
 ├── services/                  # 마이크로서비스들
-│   ├── user-service/          # 사용자 관리, 인증
-│   ├── chat-service/          # AI 채팅, FAQ
-│   ├── community-service/     # 커뮤니티, 게시글
-│   ├── notification-service/  # 알림 시스템
-│   └── subscription-service/  # 구독, 결제
-├── infrastructure/            # 인프라 구성요소
-│   └── gateway/              # API Gateway
+│   ├── user-service/             # 사용자 관리, 인증
+│   ├── chat-service/             # AI 채팅, FAQ
+│   ├── community-service/        # 커뮤니티, 게시글
+│   ├── notification-service/     # 알림 시스템
+│   └── subscription-service/     # 구독, 결제
+├── infrastructure/           # 인프라 구성요소
+│   └── gateway/                 # API Gateway
 ├── shared/                   # 공통 모듈
-│   ├── common/               # 공통 라이브러리 (Redis, 로깅, WebClient)
-│   └── security/             # JWT, 보안 유틸리티
+│   ├── common/                  # 공통 라이브러리 (Redis, 로깅, WebClient)
+│   └── security/                # JWT, 보안 유틸리티
 ├── scripts/                  # 개발/배포 스크립트
 ```
 
