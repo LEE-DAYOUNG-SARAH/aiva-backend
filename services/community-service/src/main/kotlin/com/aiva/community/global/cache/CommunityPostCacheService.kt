@@ -8,7 +8,7 @@ import com.aiva.common.redis.service.RedisCommunityService
 import com.aiva.community.global.cache.toCommunityPost
 import com.aiva.community.global.cache.toCommunityPostCache
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -22,7 +22,7 @@ class CommunityPostCacheService(
     private val communityPostCacheRepository: CommunityPostCacheRepository
 ) {
     
-    private val logger = LoggerFactory.getLogger(CommunityPostCacheService::class.java)
+    private val logger = KotlinLogging.logger {}
     
     companion object {
         private const val POST_KEY_PREFIX = "post:"
@@ -53,9 +53,9 @@ class CommunityPostCacheService(
         try {
             val postCache = postWithAuthor.toCommunityPostCache()
             communityPostCacheRepository.save(postCache)
-            logger.debug("Cached post with author: {}", postWithAuthor.post.id)
+            logger.debug { "Cached post with author: ${postWithAuthor.post.id}" }
         } catch (e: Exception) {
-            logger.error("Failed to cache post with author: ${postWithAuthor.post.id}", e)
+            logger.error(e) { "Failed to cache post with author: ${postWithAuthor.post.id}" }
         }
     }
 
@@ -67,7 +67,7 @@ class CommunityPostCacheService(
         return try {
             communityPostCacheRepository.findById(postId).orElse(null)
         } catch (e: Exception) {
-            logger.error("Failed to get cached post with author: $postId", e)
+            logger.error(e) { "Failed to get cached post with author: $postId" }
             null
         }
     }
@@ -81,9 +81,9 @@ class CommunityPostCacheService(
             // 새로운 방식 삭제
             communityPostCacheRepository.deleteById(postId)
             
-            logger.debug("Evicted post: {}", postId)
+            logger.debug { "Evicted post: $postId" }
         } catch (e: Exception) {
-            logger.error("Failed to evict post: $postId", e)
+            logger.error(e) { "Failed to evict post: $postId" }
         }
     }
     
@@ -96,9 +96,9 @@ class CommunityPostCacheService(
             val key = "$LATEST_LIST_PREFIX$page"
             val postIdsJson = objectMapper.writeValueAsString(postIds)
             redisTemplate.opsForValue().set(key, postIdsJson, LATEST_LIST_TTL)
-            logger.debug("Cached latest post list page: {}, size: {}", page, postIds.size)
+            logger.debug { "Cached latest post list page: $page, size: ${postIds.size}" }
         } catch (e: Exception) {
-            logger.error("Failed to cache latest post list page: $page", e)
+            logger.error(e) { "Failed to cache latest post list page: $page" }
         }
     }
     
@@ -110,7 +110,7 @@ class CommunityPostCacheService(
                 objectMapper.readValue(it.toString(), objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
             }
         } catch (e: Exception) {
-            logger.error("Failed to get cached latest post list page: $page", e)
+            logger.error(e) { "Failed to get cached latest post list page: $page" }
             null
         }
     }
@@ -119,9 +119,9 @@ class CommunityPostCacheService(
         try {
             val keys = (startPage..endPage).map { "$LATEST_LIST_PREFIX$it" }
             redisTemplate.delete(keys)
-            logger.debug("Evicted latest post list pages: {} to {}", startPage, endPage)
+            logger.debug { "Evicted latest post list pages: $startPage to $endPage" }
         } catch (e: Exception) {
-            logger.error("Failed to evict latest post list pages", e)
+            logger.error(e) { "Failed to evict latest post list pages" }
         }
     }
     
@@ -132,9 +132,9 @@ class CommunityPostCacheService(
             val key = "$POPULAR_LIST_PREFIX$page"
             val postIdsJson = objectMapper.writeValueAsString(postIds)
             redisTemplate.opsForValue().set(key, postIdsJson, POPULAR_LIST_TTL)
-            logger.debug("Cached popular post list page: {}, size: {}", page, postIds.size)
+            logger.debug { "Cached popular post list page: $page, size: ${postIds.size}" }
         } catch (e: Exception) {
-            logger.error("Failed to cache popular post list page: $page", e)
+            logger.error(e) { "Failed to cache popular post list page: $page" }
         }
     }
     
@@ -146,7 +146,7 @@ class CommunityPostCacheService(
                 objectMapper.readValue(it.toString(), objectMapper.typeFactory.constructCollectionType(List::class.java, UUID::class.java))
             }
         } catch (e: Exception) {
-            logger.error("Failed to get cached popular post list page: $page", e)
+            logger.error(e) { "Failed to get cached popular post list page: $page" }
             null
         }
     }
@@ -155,9 +155,9 @@ class CommunityPostCacheService(
         try {
             val keys = (startPage..endPage).map { "$POPULAR_LIST_PREFIX$it" }
             redisTemplate.delete(keys)
-            logger.debug("Evicted popular post list pages: {} to {}", startPage, endPage)
+            logger.debug { "Evicted popular post list pages: $startPage to $endPage" }
         } catch (e: Exception) {
-            logger.error("Failed to evict popular post list pages", e)
+            logger.error(e) { "Failed to evict popular post list pages" }
         }
     }
     
@@ -168,10 +168,10 @@ class CommunityPostCacheService(
     fun incrementLatestListVersion(): Long {
         return try {
             val newVersion = redisTemplate.opsForValue().increment(LATEST_LIST_VERSION_KEY) ?: 1L
-            logger.debug("Incremented latest list version to: {}", newVersion)
+            logger.debug { "Incremented latest list version to: $newVersion" }
             newVersion
         } catch (e: Exception) {
-            logger.error("Failed to increment latest list version", e)
+            logger.error(e) { "Failed to increment latest list version" }
             1L
         }
     }
@@ -179,10 +179,10 @@ class CommunityPostCacheService(
     fun getLatestListVersion(): Long {
         return try {
             val version = redisTemplate.opsForValue().get(LATEST_LIST_VERSION_KEY)?.toString()?.toLongOrNull() ?: 0L
-            logger.debug("Current latest list version: {}", version)
+            logger.debug { "Current latest list version: $version" }
             version
         } catch (e: Exception) {
-            logger.error("Failed to get latest list version", e)
+            logger.error(e) { "Failed to get latest list version" }
             0L
         }
     }
@@ -192,10 +192,10 @@ class CommunityPostCacheService(
     fun incrementPopularListVersion(): Long {
         return try {
             val newVersion = redisTemplate.opsForValue().increment(POPULAR_LIST_VERSION_KEY) ?: 1L
-            logger.debug("Incremented popular list version to: {}", newVersion)
+            logger.debug { "Incremented popular list version to: $newVersion" }
             newVersion
         } catch (e: Exception) {
-            logger.error("Failed to increment popular list version", e)
+            logger.error(e) { "Failed to increment popular list version" }
             1L
         }
     }
@@ -203,10 +203,10 @@ class CommunityPostCacheService(
     fun getPopularListVersion(): Long {
         return try {
             val version = redisTemplate.opsForValue().get(POPULAR_LIST_VERSION_KEY)?.toString()?.toLongOrNull() ?: 0L
-            logger.debug("Current popular list version: {}", version)
+            logger.debug { "Current popular list version: $version" }
             version
         } catch (e: Exception) {
-            logger.error("Failed to get popular list version", e)
+            logger.error(e) { "Failed to get popular list version" }
             0L
         }
     }
@@ -227,10 +227,10 @@ class CommunityPostCacheService(
             
             if (postCaches.isNotEmpty()) {
                 communityPostCacheRepository.saveAll(postCaches)
-                logger.debug("Bulk cached {} posts using repository", posts.size)
+                logger.debug { "Bulk cached ${posts.size} posts using repository" }
             }
         } catch (e: Exception) {
-            logger.error("Failed to bulk cache posts using repository", e)
+            logger.error(e) { "Failed to bulk cache posts using repository" }
         }
     }
     
@@ -247,9 +247,9 @@ class CommunityPostCacheService(
                 result[cachedPost.id] = cachedPost.toCommunityPost()
             }
             
-            logger.debug("Retrieved {} cached posts out of {} using repository", result.size, postIds.size)
+            logger.debug { "Retrieved ${result.size} cached posts out of ${postIds.size} using repository" }
         } catch (e: Exception) {
-            logger.error("Failed to get cached posts using repository", e)
+            logger.error(e) { "Failed to get cached posts using repository" }
         }
         
         return result
@@ -264,7 +264,7 @@ class CommunityPostCacheService(
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
-            logger.error("Failed to get latest posts from cache", e)
+            logger.error(e) { "Failed to get latest posts from cache" }
             emptyList()
         }
     }
@@ -278,7 +278,7 @@ class CommunityPostCacheService(
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
-            logger.error("Failed to get popular posts from cache", e)
+            logger.error(e) { "Failed to get popular posts from cache" }
             emptyList()
         }
     }
@@ -292,7 +292,7 @@ class CommunityPostCacheService(
                 .take(limit)
                 .map { it.toCommunityPost() }
         } catch (e: Exception) {
-            logger.error("Failed to get user posts from cache for user: $authorId", e)
+            logger.error(e) { "Failed to get user posts from cache for user: $authorId" }
             emptyList()
         }
     }
@@ -304,7 +304,7 @@ class CommunityPostCacheService(
         return try {
             communityPostCacheRepository.count()
         } catch (e: Exception) {
-            logger.error("Failed to get cached posts count", e)
+            logger.error(e) { "Failed to get cached posts count" }
             0L
         }
     }
@@ -344,7 +344,7 @@ class CommunityPostCacheService(
                 groupedPosts.size)
             
         } catch (e: Exception) {
-            logger.error("Failed to batch cache popular posts", e)
+            logger.error(e) { "Failed to batch cache popular posts" }
         }
     }
     

@@ -2,7 +2,7 @@ package com.aiva.community.domain.post.service
 
 import com.aiva.community.domain.user.AuthorInfo
 import com.aiva.community.domain.user.UserProfileProjectionRepository
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -19,7 +19,7 @@ class CommunityPostUserService(
     private val userProfileRepository: UserProfileProjectionRepository
 ) {
     
-    private val logger = LoggerFactory.getLogger(CommunityPostUserService::class.java)
+    private val logger = KotlinLogging.logger {}
     
     /**
      * 단일 사용자 프로필 조회
@@ -30,7 +30,7 @@ class CommunityPostUserService(
                 .map { it.toAuthorInfo() }
                 .orElse(null)
         } catch (e: Exception) {
-            logger.error("Failed to get user profile for userId: $userId", e)
+            logger.error(e) { "Failed to get user profile for userId: $userId" }
             null
         }
     }
@@ -46,11 +46,11 @@ class CommunityPostUserService(
         
         return try {
             val profiles = userProfileRepository.findAllByUserIds(userIds)
-            logger.debug("Retrieved {} user profiles from local projection", profiles.size)
+            logger.debug { "Retrieved ${profiles.size} user profiles from local projection" }
             
             profiles.associate { it.userId to it.toAuthorInfo() }
         } catch (e: Exception) {
-            logger.error("Failed to get user profiles for userIds: $userIds", e)
+            logger.error(e) { "Failed to get user profiles for userIds: $userIds" }
             emptyMap()
         }
     }
@@ -73,7 +73,7 @@ class CommunityPostUserService(
         return try {
             userProfileRepository.existsById(userId)
         } catch (e: Exception) {
-            logger.error("Failed to check user profile existence for userId: $userId", e)
+            logger.error(e) { "Failed to check user profile existence for userId: $userId" }
             false
         }
     }
@@ -86,7 +86,7 @@ class CommunityPostUserService(
             userProfileRepository.findByNicknameContaining(keyword)
                 .map { it.toAuthorInfo() }
         } catch (e: Exception) {
-            logger.error("Failed to search users by nickname: $keyword", e)
+            logger.error(e) { "Failed to search users by nickname: $keyword" }
             emptyList()
         }
     }
@@ -98,7 +98,7 @@ class CommunityPostUserService(
         return try {
             userProfileRepository.count()
         } catch (e: Exception) {
-            logger.error("Failed to get total user count", e)
+            logger.error(e) { "Failed to get total user count" }
             0L
         }
     }

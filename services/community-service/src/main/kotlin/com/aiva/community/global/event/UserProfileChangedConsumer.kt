@@ -3,7 +3,7 @@ package com.aiva.community.global.event
 import com.aiva.community.domain.user.UserProfileProjection
 import com.aiva.community.domain.user.UserProfileProjectionRepository
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.kafka.support.KafkaHeaders
@@ -26,7 +26,7 @@ class UserProfileChangedConsumer    (
     private val objectMapper: ObjectMapper
 ) {
     
-    private val logger = LoggerFactory.getLogger(UserProfileChangedConsumer::class.java)
+    private val logger = KotlinLogging.logger {}
     
     @KafkaListener(
         topics = ["\${app.kafka.topics.user-profile-changed.name:user.profile.changed}"],
@@ -43,8 +43,7 @@ class UserProfileChangedConsumer    (
         acknowledgment: Acknowledgment?
     ) {
         try {
-            logger.debug("Received user profile changed event from topic: {}, partition: {}, offset: {}", 
-                         topic, partition, offset)
+            logger.debug { "Received user profile changed event from topic: $topic, partition: $partition, offset: $offset" }
             
             val event = objectMapper.readValue(message, UserProfileChangedEvent::class.java)
             
@@ -57,11 +56,10 @@ class UserProfileChangedConsumer    (
             // 수동 커밋 (처리 완료 후)
             acknowledgment?.acknowledge()
             
-            logger.info("Successfully processed user profile event for user: {}, version: {}", 
-                       event.userId, event.version)
+            logger.info { "Successfully processed user profile event for user: ${event.userId}, version: ${event.version}" }
             
         } catch (e: Exception) {
-            logger.error("Failed to process user profile changed event: $message", e)
+            logger.error(e) { "Failed to process user profile changed event: $message" }
             // 예외 발생 시 acknowledge 하지 않음 -> 재시도 또는 DLQ로 이동
             throw e
         }
@@ -71,7 +69,7 @@ class UserProfileChangedConsumer    (
      * 사용자 프로필 Upsert 처리
      */
     private fun handleUpsert(event: UserProfileChangedEvent) {
-        logger.debug("Processing upsert for user: {}, version: {}", event.userId, event.version)
+        logger.debug { "Processing upsert for user: ${event.userId}, version: ${event.version}" }
         
         // 1. 기존 프로젝션 조회
         val existing = userProfileRepository.findById(event.userId).orElse(null)
@@ -79,8 +77,7 @@ class UserProfileChangedConsumer    (
         if (existing != null) {
             // 2. 순서 보장 체크
             if (event.version <= existing.version) {
-                logger.warn("Ignoring out-of-order event for user: {}, eventVersion: {}, currentVersion: {}", 
-                           event.userId, event.version, existing.version)
+                logger.warn { "Ignoring out-of-order event for user: ${event.userId}, eventVersion: ${event.version}, currentVersion: ${existing.version}" }
                 return
             }
             
@@ -95,7 +92,7 @@ class UserProfileChangedConsumer    (
             
             if (updated) {
                 userProfileRepository.save(existing)
-                logger.debug("Updated existing user profile for user: {}", event.userId)
+                logger.debug { "Updated existing user profile for user: ${event.userId}" }
             }
         } else {
             // 4. 새 프로젝션 생성
@@ -109,7 +106,7 @@ class UserProfileChangedConsumer    (
             )
             
             userProfileRepository.save(newProjection)
-            logger.debug("Created new user profile projection for user: {}", event.userId)
+            logger.debug { "Created new user profile projection for user: ${event.userId}" }
         }
     }
     
@@ -117,15 +114,14 @@ class UserProfileChangedConsumer    (
      * 사용자 프로필 삭제 처리
      */
     private fun handleDelete(event: UserProfileChangedEvent) {
-        logger.debug("Processing delete for user: {}", event.userId)
+        logger.debug { "Processing delete for user: ${event.userId}" }
         
         val existing = userProfileRepository.findById(event.userId).orElse(null)
         if (existing != null && event.version > existing.version) {
             userProfileRepository.deleteById(event.userId)
-            logger.info("Deleted user profile projection for user: {}", event.userId)
+            logger.info { "Deleted user profile projection for user: ${event.userId}" }
         } else {
-            logger.warn("Cannot delete user profile: user not found or out-of-order event for user: {}", 
-                       event.userId)
+            logger.warn { "Cannot delete user profile: user not found or out-of-order event for user: ${event.userId}" }
         }
     }
 }

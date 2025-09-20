@@ -1,6 +1,6 @@
 package com.aiva.community.global.event.notification
 
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.util.*
@@ -16,7 +16,7 @@ class NotificationEventService(
     private val applicationEventPublisher: ApplicationEventPublisher
 ) {
     
-    private val logger = LoggerFactory.getLogger(NotificationEventService::class.java)
+    private val logger = KotlinLogging.logger {}
     
     /**
      * 게시글 좋아요 알림 발행
@@ -30,7 +30,7 @@ class NotificationEventService(
     ) {
         // 본인이 본인 게시글에 좋아요 누른 경우 알림 발송하지 않음
         if (postAuthorId == likerUserId) {
-            logger.debug("Skipping self-like notification for user: $likerUserId")
+            logger.debug { "Skipping self-like notification for user: $likerUserId" }
             return
         }
         
@@ -43,7 +43,7 @@ class NotificationEventService(
         )
         
         publishEvent(event)
-        logger.debug("Published post liked notification: postId=$postId, liker=$likerUserId")
+        logger.debug { "Published post liked notification: postId=$postId, liker=$likerUserId" }
     }
     
     /**
@@ -60,7 +60,7 @@ class NotificationEventService(
     ) {
         // 본인이 본인 게시글에 댓글 단 경우 알림 발송하지 않음
         if (postAuthorId == commenterUserId) {
-            logger.debug("Skipping self-comment notification for user: $commenterUserId")
+            logger.debug { "Skipping self-comment notification for user: $commenterUserId" }
             return
         }
         
@@ -75,7 +75,7 @@ class NotificationEventService(
         )
         
         publishEvent(event)
-        logger.debug("Published comment created notification: postId=$postId, commentId=$commentId")
+        logger.debug { "Published comment created notification: postId=$postId, commentId=$commentId" }
     }
     
     /**
@@ -92,7 +92,7 @@ class NotificationEventService(
     ) {
         // 본인이 본인 댓글에 답글 단 경우 알림 발송하지 않음
         if (originalCommenterUserId == replierUserId) {
-            logger.debug("Skipping self-reply notification for user: $replierUserId")
+            logger.debug { "Skipping self-reply notification for user: $replierUserId" }
             return
         }
         
@@ -107,7 +107,7 @@ class NotificationEventService(
         )
         
         publishEvent(event)
-        logger.debug("Published reply created notification: originalCommentId=$originalCommentId, replyId=$replyCommentId")
+        logger.debug { "Published reply created notification: originalCommentId=$originalCommentId, replyId=$replyCommentId" }
     }
     
     /**
@@ -122,7 +122,7 @@ class NotificationEventService(
     ) {
         // 본인이 본인 댓글에 좋아요 누른 경우 알림 발송하지 않음
         if (commentAuthorId == likerUserId) {
-            logger.debug("Skipping self-comment-like notification for user: $likerUserId")
+            logger.debug { "Skipping self-comment-like notification for user: $likerUserId" }
             return
         }
         
@@ -135,7 +135,7 @@ class NotificationEventService(
         )
         
         publishEvent(event)
-        logger.debug("Published comment liked notification: commentId=$commentId, liker=$likerUserId")
+        logger.debug { "Published comment liked notification: commentId=$commentId, liker=$likerUserId" }
     }
     
     /**
@@ -146,7 +146,7 @@ class NotificationEventService(
         try {
             applicationEventPublisher.publishEvent(NotificationApplicationEvent(event))
         } catch (e: Exception) {
-            logger.error("Failed to publish application event for notification: ${event.eventId}", e)
+            logger.error(e) { "Failed to publish application event for notification: ${event.eventId}" }
             // 알림 발송 실패가 비즈니스 로직을 방해하지 않도록 예외를 삼킴
         }
     }

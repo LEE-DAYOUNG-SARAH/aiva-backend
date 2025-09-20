@@ -2,7 +2,7 @@ package com.aiva.common.kafka.handler
 
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.kafka.listener.ConsumerAwareListenerErrorHandler
 import org.springframework.kafka.listener.ListenerExecutionFailedException
 import org.springframework.stereotype.Component
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 @Component("kafkaErrorHandler")
 class KafkaErrorHandler : ConsumerAwareListenerErrorHandler {
     
-    private val logger = LoggerFactory.getLogger(KafkaErrorHandler::class.java)
+    private val logger = KotlinLogging.logger {}
     
     override fun handleError(
         message: org.springframework.messaging.Message<*>,
@@ -28,19 +28,18 @@ class KafkaErrorHandler : ConsumerAwareListenerErrorHandler {
         val offset = record?.offset() ?: -1
         val value = record?.value()?.toString() ?: "unknown"
         
-        logger.error(
-            "Kafka message processing failed. Topic: {}, Partition: {}, Offset: {}, Value: {}", 
-            topic, partition, offset, value, exception
-        )
+        logger.error(exception) {
+            "Kafka message processing failed. Topic: $topic, Partition: $partition, Offset: $offset, Value: $value"
+        }
         
         // 특정 예외 타입에 따른 처리
         when (exception.cause) {
             is IllegalArgumentException -> {
-                logger.warn("Skipping invalid message due to illegal argument: {}", value)
+                logger.warn { "Skipping invalid message due to illegal argument: $value" }
                 return message // 메시지 스킵
             }
             is org.springframework.dao.DataIntegrityViolationException -> {
-                logger.warn("Data integrity violation, skipping message: {}", value)
+                logger.warn { "Data integrity violation, skipping message: $value" }
                 return message // 메시지 스킵
             }
             else -> {
@@ -54,7 +53,7 @@ class KafkaErrorHandler : ConsumerAwareListenerErrorHandler {
         return try {
             message.headers["kafka_receivedMessageKey"] as? ConsumerRecord<*, *>
         } catch (e: Exception) {
-            logger.debug("Could not extract ConsumerRecord from message", e)
+            logger.debug(e) { "Could not extract ConsumerRecord from message" }
             null
         }
     }

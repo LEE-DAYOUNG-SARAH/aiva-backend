@@ -9,7 +9,7 @@ import com.aiva.community.domain.post.repository.CommunityPostImageRepository
 import com.aiva.community.global.cache.CommunityPostCacheService
 import com.aiva.community.global.cache.toCommunityPost
 import com.aiva.community.domain.post.service.CommunityPostUserService
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -26,13 +26,13 @@ class CommunityPostReadService(
     private val userService: CommunityPostUserService
 ) {
     
-    private val logger = LoggerFactory.getLogger(CommunityPostReadService::class.java)
+    private val logger = KotlinLogging.logger {}
 
     fun getActivePostById(postId: UUID): CommunityPost {
         // 캐시 우선 조회
         val cachedPost = cacheService.getCachedPostWithAuthor(postId)
         if (cachedPost != null) {
-            logger.debug("Cache hit for post: {}", postId)
+            logger.debug { "Cache hit for post: $postId" }
             return cachedPost.toCommunityPost()
         }
         
@@ -42,7 +42,7 @@ class CommunityPostReadService(
             
         // 조회된 게시물은 개별적으로 캐시 (사용자 정보 없이)
         // cacheService.cachePost(post) // CommunityPostWithAuthor가 필요하므로 여기서는 캐시하지 않음
-        logger.debug("Retrieved post from DB: {}", postId)
+        logger.debug { "Retrieved post from DB: $postId" }
         
         return post
     }
@@ -87,7 +87,7 @@ class CommunityPostReadService(
         pageable: Pageable,
         pageNumber: Int
     ): Page<CommunityPost> {
-        logger.debug("Cache hit for post list page: {}", pageNumber)
+        logger.debug { "Cache hit for post list page: $pageNumber" }
 
         // 캐시에서 게시물 내용 조회 (MGET)
         val cachedPosts = cacheService.getPosts(cachedIds)
@@ -98,7 +98,7 @@ class CommunityPostReadService(
             val dbPosts = communityPostRepository.findActivePostsByIds(missingIds)
             // 누락된 게시물들 캐시에 저장
             cacheService.cachePosts(dbPosts)
-            logger.debug("Cached {} missing posts from DB", dbPosts.size)
+            logger.debug { "Cached ${dbPosts.size} missing posts from DB" }
             dbPosts.associateBy { it.id }
         } else emptyMap()
 
@@ -116,7 +116,7 @@ class CommunityPostReadService(
         pageable: Pageable,
         pageNumber: Int
     ): Page<CommunityPost> {
-        logger.debug("Cache miss for post list page: {}, querying DB", pageNumber)
+        logger.debug { "Cache miss for post list page: $pageNumber, querying DB" }
 
         // 캐시 미스 시 DB 조회
         val dbResult = communityPostRepository.findActivePosts(pageable)
@@ -128,7 +128,7 @@ class CommunityPostReadService(
         // 게시물 내용들도 캐시에 저장
         cacheService.cachePosts(dbResult.content)
 
-        logger.debug("Cached post list page: {} and {} posts", pageNumber, dbResult.content.size)
+        logger.debug { "Cached post list page: $pageNumber and ${dbResult.content.size} posts" }
 
         return dbResult
     }
@@ -151,8 +151,7 @@ class CommunityPostReadService(
         // 3. 로컬 프로젝션에서 사용자 정보 배치 조회
         val userProfiles = userService.getUserProfiles(userIds)
         
-        logger.debug("Retrieved {} user profiles from local projection for {} posts", 
-                     userProfiles.size, postsPage.content.size)
+        logger.debug { "Retrieved ${userProfiles.size} user profiles from local projection for ${postsPage.content.size} posts" }
         
         // 4. 게시물 이미지 정보 배치 조회 (캐시에서 온 데이터는 lazy loading이 안될 수 있음)
         val postIds = postsPage.content.map { it.id }
