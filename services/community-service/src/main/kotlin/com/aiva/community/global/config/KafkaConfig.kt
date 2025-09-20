@@ -1,7 +1,6 @@
 package com.aiva.community.global.config
 
-import com.aiva.community.global.event.UserProfileChangedEvent
-import com.fasterxml.jackson.databind.ObjectMapper
+import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -13,18 +12,14 @@ import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.*
 import org.springframework.kafka.listener.ContainerProperties
-import org.springframework.kafka.support.serializer.JsonDeserializer
-import org.springframework.kafka.support.serializer.JsonSerializer
-import org.springframework.kafka.listener.CommonErrorHandler
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
+import org.springframework.kafka.support.serializer.JsonSerializer
 
 @Configuration
 @EnableKafka
 class KafkaConfig {
     
-    private val logger = LoggerFactory.getLogger(KafkaConfig::class.java)
+    private val logger = KotlinLogging.logger {}
     
     @Value("\${spring.kafka.bootstrap-servers:localhost:9092}")
     private lateinit var bootstrapServers: String

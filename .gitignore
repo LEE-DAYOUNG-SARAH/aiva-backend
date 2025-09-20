@@ -50,3 +50,6 @@ docker-data/
 *~
 # IDE History
 .history/
+
+.claude/
+claudedocs/
