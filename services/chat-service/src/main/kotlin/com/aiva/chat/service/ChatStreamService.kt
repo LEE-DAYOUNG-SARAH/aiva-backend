@@ -1,39 +1,46 @@
 package com.aiva.chat.service
 
 import com.aiva.chat.dto.AiChatRequest
+import com.aiva.common.redis.service.ActiveChatStreamService
 import com.fasterxml.jackson.databind.JsonNode
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Sinks
+import reactor.core.publisher.Mono
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class ChatStreamService(
     private val chatManagementService: ChatManagementService,
     private val aiService: AiService,
-    private val aiResponseParser: AiResponseParser
+    private val aiResponseParser: AiResponseParser,
+    private val activeChatStreamService: ActiveChatStreamService
 ) {
     
-    private val activeSessions = ConcurrentHashMap<SessionStreamKey, Sinks.One<Boolean>>()
+    private val logger = KotlinLogging.logger {}
     
-    fun streamChatResponse(request: AiChatRequest, chatId: UUID, sessionId: String, isFirstChat: Boolean = false): Flux<String> {
+    fun streamChatResponse(request: AiChatRequest, chatId: UUID, sessionId: String, userId: UUID, isFirstChat: Boolean = false): Flux<String> {
         val state = ChatStreamingState(chatId, isFirstChat)
-        val sessionKey = SessionStreamKey(chatId, sessionId)
-        val cancellationSink = createCancellationSink(sessionKey)
+        
+        // Redis에 활성 스트림 등록
+        activeChatStreamService.createActiveStream(chatId, sessionId, userId)
+        logger.info { "스트림 세션 시작: chatId=$chatId, sessionId=$sessionId" }
+        
+        // Redis Pub/Sub 취소 신호 구독
+        val cancellationSignal = activeChatStreamService.listenForCancellation(chatId, sessionId)
+            .next() // 첫 번째 취소 신호만 처리
+            .map { true }
         
         return aiService.streamChatResponse(request)
-            .doOnNext { line -> processStreamLine(line, state) }
-            .takeUntilOther(cancellationSink.asMono())
+            .doOnNext { line -> 
+                processStreamLine(line, state)
+                activeChatStreamService.markStreamActive(chatId, sessionId) // 활성 상태 갱신
+            }
+            .takeUntilOther(cancellationSignal)
             .doOnCancel { handleCancellation(request, state) }
-            .doFinally { finalizeStream(sessionKey, state) }
+            .doFinally { finalizeStream(chatId, sessionId, state) }
     }
     
-    private fun createCancellationSink(sessionKey: SessionStreamKey): Sinks.One<Boolean> {
-        val cancellationSink = Sinks.one<Boolean>()
-        activeSessions[sessionKey] = cancellationSink
-        return cancellationSink
-    }
     
     private fun processStreamLine(line: String, state: ChatStreamingState) {
         val event = aiResponseParser.parseEventLine(line) ?: return
@@ -74,8 +81,11 @@ class ChatStreamService(
         aiService.cancelChatStream(request)
     }
     
-    private fun finalizeStream(sessionKey: SessionStreamKey, state: ChatStreamingState) {
-        activeSessions.remove(sessionKey)
+    private fun finalizeStream(chatId: UUID, sessionId: String, state: ChatStreamingState) {
+        logger.info { "스트림 세션 종료: chatId=$chatId, sessionId=$sessionId" }
+        
+        // Redis에서 활성 스트림 정리
+        activeChatStreamService.cleanupFinishedStream(chatId, sessionId)
         
         if (state.hasContent()) {
             saveStreamResult(state)
@@ -101,11 +111,8 @@ class ChatStreamService(
         }
     }
     
-    fun cancelChatStream(chatId: UUID, sessionId: String): Boolean {
-        val sessionKey = SessionStreamKey(chatId, sessionId)
-        return activeSessions[sessionKey]?.let { sink ->
-            sink.tryEmitValue(true)
-            true
-        } ?: false
+    fun cancelChatStream(chatId: UUID, sessionId: String): Mono<Boolean> {
+        logger.info { "스트림 취소 요청: chatId=$chatId, sessionId=$sessionId" }
+        return activeChatStreamService.cancelStream(chatId, sessionId)
     }
 }

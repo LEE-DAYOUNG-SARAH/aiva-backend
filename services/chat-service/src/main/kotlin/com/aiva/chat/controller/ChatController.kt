@@ -51,7 +51,7 @@ class ChatController(
 
         // 2. AI 요청 생성 및 스트리밍
         val aiRequest = createAiRequest(userId, request.content, childData, chatId, isFirstMessage)
-        return chatStreamService.streamChatResponse(aiRequest, chatId, sessionId, isFirstMessage)
+        return chatStreamService.streamChatResponse(aiRequest, chatId, sessionId, userId, isFirstMessage)
     }
     
     @PostMapping("/{chatId}/cancel")
@@ -59,13 +59,13 @@ class ChatController(
         @PathVariable chatId: UUID,
         @RequestHeader("X-Session-Id") sessionId: String
     ): Mono<Map<String, Any>> {
-        val cancelled = chatStreamService.cancelChatStream(chatId, sessionId)
-        return Mono.just(
-            mapOf(
-                "success" to cancelled,
-                "message" to if (cancelled) "채팅이 취소되었습니다" else "취소할 활성 채팅이 없습니다"
-            )
-        )
+        return chatStreamService.cancelChatStream(chatId, sessionId)
+            .map { cancelled ->
+                mapOf(
+                    "success" to cancelled,
+                    "message" to if (cancelled) "채팅이 취소되었습니다" else "취소할 활성 채팅이 없습니다"
+                )
+            }
     }
     
     private fun createAiRequest(

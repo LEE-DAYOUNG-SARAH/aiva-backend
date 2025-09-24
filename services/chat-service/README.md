@@ -1,41 +1,53 @@
 # Chat Service
 
-AIVA 백엔드 시스템의 채팅 서비스입니다. AI 기반 대화 기능을 제공하며, OpenAI API를 활용한 지능형 채팅 시스템을 구현합니다.
+AIVA 백엔드 시스템의 채팅 서비스입니다. AI 기반 실시간 대화 기능을 제공하며, Spring WebFlux와 Redis를 활용한 분산 리액티브 채팅 시스템을 구현합니다.
 
 ## 주요 기능
 
-### AI 채팅
-- **OpenAI API 연동**: GPT 모델을 활용한 지능형 대화
-- **대화 컨텍스트 관리**: 연속적인 대화 흐름 유지
-- **실시간 채팅**: WebFlux 기반의 리액티브 채팅 처리
+### 실시간 스트리밍 채팅
+- **Server-Sent Events(SSE)**: 실시간 AI 응답 스트리밍
+- **논블로킹 I/O**: Spring WebFlux 기반 비동기 처리
+- **스트림 취소**: 실시간 채팅 중단 및 취소 기능
+- **다중 기기 지원**: 동일 사용자의 여러 기기별 독립적 세션 관리
 
-### 대화 관리
-- **채팅 세션 관리**: 사용자별 채팅 세션 추적
-- **대화 기록 저장**: 채팅 히스토리 영구 보관
-- **컨텍스트 캐싱**: Redis를 통한 빠른 대화 컨텍스트 접근
+### 분산 세션 관리
+- **Redis 기반 세션 저장소**: 분산 환경에서 세션 공유 및 관리
+- **Pub/Sub 기반 취소**: Redis 채널을 통한 실시간 스트림 취소 신호
+- **TTL 자동 정리**: 2시간 자동 만료로 메모리 최적화
+- **다중 서버 인스턴스 지원**: 로드밸런서 환경에서 세션 일관성 유지
+
+### AI 채팅 통합
+- **외부 AI API 연동**: WebClient를 통한 논블로킹 API 호출
+- **대화 컨텍스트 관리**: 연속적인 대화 흐름 유지
+- **메타데이터 처리**: 출처 정보 및 응답 상태 관리
 
 ## 기술 스택
 
 - **Framework**: Spring Boot, Spring WebFlux
-- **AI Integration**: OpenAI GPT API
-- **Database**: MySQL (대화 기록), Redis (캐시)
+- **Session Store**: Redis (분산 세션 관리, Pub/Sub)
+- **Database**: MySQL
+- **AI Integration**: 외부 AI API
 - **Security**: Spring Security
 - **Migration**: Flyway
+- **Logging**: KotlinLogging
+- **Testing**: JUnit 5, Mockito, Reactor Test
 
 ## 아키텍처
 
 ### 주요 컴포넌트
-- **Chat Controller**: 채팅 API 엔드포인트
-- **AI Service**: OpenAI API 연동 및 대화 처리
-- **Chat Repository**: 대화 데이터 영속화
-- **Context Manager**: 대화 컨텍스트 관리
+- **ChatController**: SSE 스트리밍 및 취소 API 엔드포인트
+- **ChatStreamService**: 실시간 스트림 관리 및 Redis 세션 제어
+- **ActiveChatStreamService**: 분산 세션 저장소 및 Pub/Sub 관리
+- **AiService**: 외부 AI API 논블로킹 연동
+- **ChatManagementService**: 채팅 데이터 영속화 및 관리
+- **AiResponseParser**: AI 응답 스트림 파싱 및 이벤트 처리
 
-### 데이터 플로우
-1. 사용자 메시지 수신
-2. 대화 컨텍스트 로드
-3. OpenAI API 호출
-4. 응답 생성 및 저장
-5. 클라이언트에 응답 전달
+### 리액티브 스트리밍 플로우
+1. **클라이언트 연결**: SSE 연결 생성 및 Redis 세션 등록
+2. **스트림 시작**: AI API로부터 Flux<String> 스트림 수신
+3. **실시간 전송**: 델타 응답을 클라이언트에 실시간 전송
+4. **취소 처리**: Redis Pub/Sub을 통한 분산 취소 신호 처리
+5. **세션 정리**: 스트림 완료 시 Redis 세션 자동 정리
 
 ## 실행 방법
 
@@ -56,13 +68,76 @@ AIVA 백엔드 시스템의 채팅 서비스입니다. AI 기반 대화 기능�
 
 ## API 엔드포인트
 
-### 채팅 관련
-- `POST /api/chat/send`: 메시지 전송
-- `GET /api/chat/history/{sessionId}`: 채팅 기록 조회
-- `DELETE /api/chat/session/{sessionId}`: 채팅 세션 삭제
+### 채팅 관리
+- `POST /api/chat/create`: 새 채팅방 생성
+  - Headers: `X-User-Id: {userId}`
+  - Response: 생성된 채팅방 정보
+
+### 실시간 스트리밍
+- `POST /api/chat/{chatId}/stream`: 실시간 AI 채팅 스트림
+  - Headers: `X-User-Id: {userId}`, `X-Session-Id: {sessionId}`
+  - Content-Type: `text/event-stream`
+  - Body: `{"content": "사용자 메시지"}`
+  - Response: Server-Sent Events 스트림
+
+### 스트림 제어
+- `POST /api/chat/{chatId}/cancel`: 진행 중인 스트림 취소
+  - Headers: `X-Session-Id: {sessionId}`
+  - Response: 취소 성공/실패 정보
+
+## 사용 예시
+
+### 채팅 스트림 연결
+```javascript
+// 채팅방 생성
+const chatResponse = await fetch('/api/chat/create', {
+  method: 'POST',
+  headers: { 'X-User-Id': 'user-123' }
+});
+const { chatId } = await chatResponse.json();
+
+// SSE 스트림 연결
+const eventSource = new EventSource('/api/chat/' + chatId + '/stream', {
+  method: 'POST',
+  headers: {
+    'X-User-Id': 'user-123',
+    'X-Session-Id': 'session-456'
+  },
+  body: JSON.stringify({ content: '안녕하세요!' })
+});
+
+eventSource.onmessage = (event) => {
+  console.log('AI Response:', event.data);
+};
+
+// 스트림 취소
+await fetch('/api/chat/' + chatId + '/cancel', {
+  method: 'POST',
+  headers: { 'X-Session-Id': 'session-456' }
+});
+```
+
+## 성능 특징
+
+### 리액티브 프로그래밍 장점
+- **논블로킹 I/O**: 높은 동시성과 적은 스레드 사용량
+- **백프레셔 지원**: 클라이언트와 서버 간 적절한 속도 조절
+- **메모리 효율성**: 스트림 기반 처리로 메모리 사용량 최적화
+
+### 분산 환경 최적화
+- **세션 공유**: Redis를 통한 서버 간 세션 일관성
+- **자동 정리**: TTL 기반 메모리 누수 방지
+- **실시간 취소**: Pub/Sub 패턴으로 즉시 응답 가능한 취소 처리
 
 ## 보안
 
-- Spring Security 기반 인증
-- JWT 토큰을 통한 사용자 인증
-- API 키 보안 관리
+- **인증 헤더**: `X-User-Id`를 통한 사용자 식별
+- **세션 격리**: `X-Session-Id`를 통한 기기별 독립적 세션
+- **리소스 보호**: TTL을 통한 자동 세션 만료
+- **API 보안**: Spring Security 통합 인증
+
+## 모니터링 및 로깅
+
+- **KotlinLogging**: 구조화된 로그 출력
+- **스트림 상태 추적**: 세션 생성/종료/취소 이벤트 로깅
+- **성능 메트릭**: Redis 연결 상태 및 활성 세션 수 모니터링

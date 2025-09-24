@@ -29,7 +29,9 @@
       "Read(/Users/dayoung/Library/**)",
       "Read(/Users/dayoung/Library/**)",
       "Read(/Users/dayoung/Library/**)",
-      "Read(/Users/dayoung/Library/**)"
+      "Read(/Users/dayoung/Library/**)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
