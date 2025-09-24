@@ -7,6 +7,7 @@ import com.aiva.notification.domain.notification.repository.NotificationReposito
 import com.aiva.notification.domain.notification.repository.NotificationRecipientRepository
 import com.aiva.notification.domain.notification.service.FcmService
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
@@ -29,7 +30,7 @@ class NotificationConsumer(
         groupId = "notification-service-group",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    fun handleCommunityNotification(message: String) {
+    fun handleCommunityNotification(message: String) = runBlocking {
         val event = runCatching {
             logger.info { "Received community notification: $message" }
             objectMapper.readValue(message, CommunityNotificationEvent::class.java)
@@ -69,7 +70,7 @@ class NotificationConsumer(
         throw e
     }.getOrThrow()
     
-    private fun sendFcmNotifications(event: CommunityNotificationEvent, savedNotifications: List<Notification>) = runCatching {
+    private suspend fun sendFcmNotifications(event: CommunityNotificationEvent, savedNotifications: List<Notification>) = runCatching {
         val fcmTokens = fcmTokenService.getActiveFcmTokensByUserIds(event.targetUserIds)
         
         if (fcmTokens.isEmpty()) {
@@ -82,40 +83,40 @@ class NotificationConsumer(
         // userId별 notificationId 매핑
         val userNotificationMap = savedNotifications.associateBy { it.userId }
         
-        // 각 FCM 토큰별로 NotificationRecipient 생성 및 FCM 발송
-        val recipients = fcmTokens.mapNotNull { fcmToken ->
-            val notification = userNotificationMap[fcmToken.userId] ?: return@mapNotNull null
+        // 모든 FCM 토큰을 일괄 처리
+        val tokens = fcmTokens.map { it.token }
+        
+        try {
+            // 코루틴 기반 배치 발송
+            fcmService.sendBatchNotifications(
+                tokens = tokens,
+                title = event.title,
+                body = event.body,
+                imageUrl = event.imageUrl,
+                linkUrl = event.linkUrl,
+                data = mapOf(
+                    "type" to event.type.name
+                )
+            )
             
-            runCatching {
-                // NotificationRecipient 생성
-                val recipient = NotificationRecipient(
+            // 성공한 토큰에 대한 NotificationRecipient 생성
+            val recipients = fcmTokens.mapNotNull { fcmToken ->
+                val notification = userNotificationMap[fcmToken.userId] ?: return@mapNotNull null
+                NotificationRecipient(
                     notificationId = notification.id,
                     userId = fcmToken.userId
                 )
-                
-                // FCM 발송
-                fcmService.sendNotification(
-                    fcmToken = fcmToken.token,
-                    title = event.title,
-                    body = event.body,
-                    imageUrl = event.imageUrl,
-                    linkUrl = event.linkUrl,
-                    data = mapOf(
-                        "type" to event.type.name,
-                        "notificationId" to notification.id.toString()
-                    )
-                )
-                
-                recipient
-            }.onFailure { e ->
-                logger.warn(e) { "Failed to send FCM to token: ${fcmToken.token}, user: ${fcmToken.userId}" }
-            }.getOrNull()
+            }
+            
+            // NotificationRecipient 일괄 저장
+            notificationRecipientRepository.saveAll(recipients)
+            
+            logger.info { "Completed FCM batch notification for ${tokens.size} tokens" }
+            
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to send FCM batch notifications" }
+            throw e
         }
-        
-        // NotificationRecipient 일괄 저장
-        notificationRecipientRepository.saveAll(recipients)
-        
-        logger.info { "Sent FCM notifications with notificationIds for ${fcmTokens.size} tokens" }
         
     }.onFailure { e ->
         logger.error(e) { "Error sending FCM notifications for community event" }

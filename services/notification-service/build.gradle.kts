@@ -14,6 +14,9 @@ dependencies {
     // Kafka
     implementation("org.springframework.kafka:spring-kafka")
     
+    // 코루틴
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
     
     // FCM
     implementation("com.google.firebase:firebase-admin:9.2.0")
@@ -25,4 +28,5 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("com.ninja-squad:springmockk:4.0.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
 }
