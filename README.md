@@ -13,11 +13,11 @@ AIVA는 부모를 위한 **AI 육아 비서**입니다.
 ## 🏗️ 시스템 아키텍처
 
 ### 서비스 구성
-- **User Service**: 사용자 관리, 인증, 아이 정보 관리
-- **Chat Service**: AI 채팅, FAQ 관리
-- **Community Service**: 커뮤니티 게시글, 댓글, 좋아요, 신고
-- **Notification Service**: 알림 설정, 알림 발송 관리
-- **Subscription Service**: 구독 관리, 결제 처리
+- **[User Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/user-service/README.md)**: 사용자 관리, 인증, 아이 정보 관리
+- **[Chat Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/chat-service/README.md)**: AI 채팅, FAQ 관리
+- **[Community Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/community-service/README.md)**: 커뮤니티 게시글, 댓글, 좋아요, 신고
+- **[Notification Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/notification-service/README.md)**: 알림 설정, 알림 발송 관리
+- **[Subscription Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/subscription-service/README.md)**: 구독 관리, 결제 처리
 - **API Gateway**: 라우팅, 인증, 로드밸런싱
 
 ### 인프라 구성
