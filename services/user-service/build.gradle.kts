@@ -6,10 +6,14 @@ springBoot {
 dependencies {
     implementation(project(":shared:common"))
     implementation(project(":shared:security"))
+    implementation(project(":shared:proto"))
     
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    
+    // gRPC 서버
+    implementation("net.devh:grpc-server-spring-boot-starter:2.15.0.RELEASE")
     
     // Database
     implementation("mysql:mysql-connector-java:8.0.33")

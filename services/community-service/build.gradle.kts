@@ -1,6 +1,10 @@
 dependencies {
     implementation(project(":shared:common"))
     implementation(project(":shared:security"))
+    implementation(project(":shared:proto"))
+    
+    // gRPC 클라이언트
+    implementation("net.devh:grpc-client-spring-boot-starter:2.15.0.RELEASE")
     
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

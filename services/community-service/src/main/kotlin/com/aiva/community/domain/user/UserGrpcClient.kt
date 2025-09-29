@@ -1,63 +1,72 @@
 package com.aiva.community.domain.user
 
 import com.aiva.community.domain.post.dto.AuthorInfo
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.aiva.proto.user.*
+import com.aiva.common.redis.service.RedisCommunityServiceV2
+import io.grpc.StatusException
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
+import net.devh.boot.grpc.client.inject.GrpcClient
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientException
 import java.util.*
 
 /**
- * User Service와 REST API 통신을 담당하는 클라이언트
+ * User Service와 gRPC 통신을 담당하는 클라이언트
  * 
- * 사용자 프로필 정보를 실시간으로 조회합니다.
+ * 캐시 우선 조회 → gRPC 호출 순서로 사용자 프로필 정보를 조회합니다.
  */
 @Service
 class UserGrpcClient(
-    @Value("\${user-service.url:http://localhost:8081}") private val userServiceUrl: String,
-    private val objectMapper: ObjectMapper
+    private val redisCommunityServiceV2: RedisCommunityServiceV2
 ) {
     
     private val logger = KotlinLogging.logger {}
-    private val restClient = RestClient.builder()
-        .baseUrl(userServiceUrl)
-        .build()
+    
+    @GrpcClient("user-service")
+    private lateinit var userServiceStub: UserServiceGrpcKt.UserServiceCoroutineStub
     
     /**
-     * 단일 사용자 정보 조회
+     * 단일 사용자 정보 조회 (캐시 우선)
      */
     fun getUserProfile(userId: UUID): AuthorInfo? {
+        // 1. 캐시에서 우선 조회
+        val cachedProfile = redisCommunityServiceV2.getUserProfile(userId)
+        if (cachedProfile != null) {
+            logger.debug { "Cache hit for user profile: $userId" }
+            return AuthorInfo(
+                userId = userId,
+                nickname = cachedProfile["nickname"]?.toString() ?: "Unknown",
+                profileImageUrl = cachedProfile["profileUrl"]?.toString()
+            )
+        }
+        
+        // 2. 캐시 미스 시 gRPC 호출
         return try {
-            logger.debug { "Fetching user profile for userId: $userId via REST API" }
+            logger.debug { "Cache miss, fetching user profile for userId: $userId via gRPC" }
             
-            val response = restClient.get()
-                .uri("/api/users/me")
-                .header("X-User-Id", userId.toString())
-                .retrieve()
-                .onStatus({ status -> status.is4xxClientError || status.is5xxServerError }) { _, response ->
-                    logger.warn { "User service returned error for userId: $userId, status: ${response.statusCode}" }
-                }
-                .body(String::class.java)
+            val request = GetUserProfileRequest.newBuilder()
+                .setUserId(userId.toString())
+                .build()
             
-            response?.let { responseBody ->
-                val apiResponse = objectMapper.readValue<Map<String, Any>>(responseBody)
-                val userData = apiResponse["data"] as? Map<String, Any>
-                
-                userData?.let {
-                    AuthorInfo(
-                        userId = userId,
-                        nickname = it["nickname"]?.toString() ?: "Unknown User",
-                        profileImageUrl = it["avatarUrl"]?.toString()
-                    )
-                }
+            val response = runBlocking {
+                userServiceStub.getUserProfile(request)
             }
             
-        } catch (e: RestClientException) {
-            logger.error(e) { "REST client error while fetching user profile for userId: $userId" }
+            val userProfile = response.userProfile
+            val authorInfo = AuthorInfo(
+                userId = UUID.fromString(userProfile.userId),
+                nickname = userProfile.nickname,
+                profileImageUrl = if (userProfile.hasProfileImageUrl()) userProfile.profileImageUrl else null
+            )
+            
+            // 3. 조회한 결과를 캐시에 저장
+            redisCommunityServiceV2.cacheUserProfile(userId, userProfile.nickname, 
+                if (userProfile.hasProfileImageUrl()) userProfile.profileImageUrl else null)
+            
+            authorInfo
+            
+        } catch (e: StatusException) {
+            logger.warn { "gRPC error while fetching user profile for userId: $userId, status: ${e.status}" }
             null
         } catch (e: Exception) {
             logger.error(e) { "Failed to fetch user profile for userId: $userId" }
@@ -66,19 +75,61 @@ class UserGrpcClient(
     }
     
     /**
-     * 여러 사용자 정보 배치 조회
-     * 현재는 개별 호출로 구현, 향후 배치 API 추가 시 최적화 가능
+     * 여러 사용자 정보 배치 조회 (캐시 우선)
      */
     fun getUserProfiles(userIds: Collection<UUID>): Map<UUID, AuthorInfo> {
         if (userIds.isEmpty()) return emptyMap()
         
-        logger.debug { "Fetching ${userIds.size} user profiles via REST API batch calls" }
+        val result = mutableMapOf<UUID, AuthorInfo>()
         
-        return userIds.mapNotNull { userId ->
-            getUserProfile(userId)?.let { profile ->
-                userId to profile
+        // 1. 캐시에서 배치 조회
+        val cachedProfiles = redisCommunityServiceV2.getUserProfiles(userIds)
+        cachedProfiles.forEach { (userId, profile) ->
+            result[userId] = AuthorInfo(
+                userId = userId,
+                nickname = profile["nickname"]?.toString() ?: "Unknown",
+                profileImageUrl = profile["profileUrl"]?.toString()
+            )
+        }
+        
+        // 2. 캐시 미스된 사용자들만 gRPC로 조회
+        val cacheMissUserIds = userIds - cachedProfiles.keys
+        if (cacheMissUserIds.isNotEmpty()) {
+            try {
+                logger.debug { "Cache miss for ${cacheMissUserIds.size} users, fetching via gRPC batch call" }
+                
+                val request = GetUserProfilesRequest.newBuilder()
+                    .addAllUserIds(cacheMissUserIds.map { it.toString() })
+                    .build()
+                
+                val response = runBlocking {
+                    userServiceStub.getUserProfiles(request)
+                }
+                
+                response.userProfilesList.forEach { userProfile ->
+                    val userId = UUID.fromString(userProfile.userId)
+                    val authorInfo = AuthorInfo(
+                        userId = userId,
+                        nickname = userProfile.nickname,
+                        profileImageUrl = if (userProfile.hasProfileImageUrl()) userProfile.profileImageUrl else null
+                    )
+                    
+                    result[userId] = authorInfo
+                    
+                    // 3. 조회한 결과를 캐시에 저장
+                    redisCommunityServiceV2.cacheUserProfile(userId, userProfile.nickname,
+                        if (userProfile.hasProfileImageUrl()) userProfile.profileImageUrl else null)
+                }
+                
+            } catch (e: StatusException) {
+                logger.warn { "gRPC error while fetching user profiles, status: ${e.status}" }
+            } catch (e: Exception) {
+                logger.error(e) { "Failed to fetch user profiles for userIds: $cacheMissUserIds" }
             }
-        }.toMap()
+        }
+        
+        logger.debug { "Retrieved ${result.size} user profiles (${cachedProfiles.size} from cache, ${result.size - cachedProfiles.size} from gRPC)" }
+        return result
     }
     
     /**
