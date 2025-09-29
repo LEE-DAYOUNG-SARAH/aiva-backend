@@ -3,7 +3,7 @@ package com.aiva.community.domain.post.service
 import com.aiva.community.domain.post.dto.LikeResponse
 import com.aiva.community.domain.post.repository.CommunityLikeRepository
 import com.aiva.community.domain.post.entity.CommunityLike
-import com.aiva.community.domain.user.UserProfileProjectionRepository
+import com.aiva.community.domain.user.UserGrpcClient
 import com.aiva.community.global.event.notification.NotificationEventService
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -16,7 +16,7 @@ class CommunityPostLikeService(
     private val communityLikeRepository: CommunityLikeRepository,
     private val communityPostReadService: CommunityPostReadService,
     private val communityPostUpdateService: CommunityPostUpdateService,
-    private val userProfileRepository: UserProfileProjectionRepository,
+    private val userGrpcClient: UserGrpcClient,
     private val notificationEventService: NotificationEventService
 ) {
     val log = KotlinLogging.logger {  }
@@ -42,7 +42,7 @@ class CommunityPostLikeService(
         
         // 게시글 좋아요 알림 이벤트 발행
         try {
-            val likerProfile = userProfileRepository.findById(userId).orElse(null)
+            val likerProfile = userGrpcClient.getUserProfile(userId)
             if (likerProfile != null) {
                 notificationEventService.publishPostLikedNotification(
                     postAuthorId = post.userId,

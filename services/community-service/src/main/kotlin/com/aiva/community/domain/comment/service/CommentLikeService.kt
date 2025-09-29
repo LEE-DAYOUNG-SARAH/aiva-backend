@@ -3,7 +3,7 @@ package com.aiva.community.domain.comment.service
 import com.aiva.community.domain.comment.entity.CommentLike
 import com.aiva.community.domain.comment.repository.CommentLikeRepository
 import com.aiva.community.domain.post.dto.LikeResponse
-import com.aiva.community.domain.user.UserProfileProjectionRepository
+import com.aiva.community.domain.user.UserGrpcClient
 import com.aiva.community.global.event.notification.NotificationEventService
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -15,8 +15,8 @@ import java.util.*
 class CommentLikeService(
     private val commentLikeRepository: CommentLikeRepository,
     private val commentReadService: CommentReadService,
-    private val userProfileRepository: UserProfileProjectionRepository,
-    private val notificationEventService: NotificationEventService
+    private val notificationEventService: NotificationEventService,
+    private val userGrpcClient: UserGrpcClient
 ) {
     val log = KotlinLogging.logger {  }
 
@@ -50,7 +50,7 @@ class CommentLikeService(
         
         // 댓글 좋아요 알림 이벤트 발행
         try {
-            val likerProfile = userProfileRepository.findById(userId).orElse(null)
+            val likerProfile = userGrpcClient.getUserProfile(userId)
             if (likerProfile != null) {
                 notificationEventService.publishCommentLikedNotification(
                     commentAuthorId = comment.userId,

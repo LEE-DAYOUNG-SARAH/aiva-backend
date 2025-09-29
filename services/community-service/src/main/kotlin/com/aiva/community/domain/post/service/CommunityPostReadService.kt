@@ -1,14 +1,16 @@
 package com.aiva.community.domain.post.service
 
 import com.aiva.common.response.PageResponse
-import com.aiva.community.domain.post.dto.CommunityPostResponse
-import com.aiva.community.domain.post.dto.CommunityPostWithAuthor
+import com.aiva.community.domain.post.dto.*
 import com.aiva.community.domain.post.entity.CommunityPost
 import com.aiva.community.domain.post.repository.CommunityPostRepository
 import com.aiva.community.domain.post.repository.CommunityPostImageRepository
-import com.aiva.community.global.cache.CommunityPostCacheService
+import com.aiva.common.redis.service.RedisCommunityServiceV2
 import com.aiva.community.global.cache.toCommunityPost
-import com.aiva.community.domain.post.service.CommunityPostUserService
+import com.aiva.community.global.cache.toCommunityPostCache
+import com.aiva.community.domain.user.UserGrpcClient
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import mu.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -22,15 +24,15 @@ import java.util.*
 class CommunityPostReadService(
     private val communityPostRepository: CommunityPostRepository,
     private val communityPostImageRepository: CommunityPostImageRepository,
-    private val cacheService: CommunityPostCacheService,
-    private val userService: CommunityPostUserService
+    private val redisCommunityServiceV2: RedisCommunityServiceV2,
+    private val userGrpcClient: UserGrpcClient
 ) {
     
     private val logger = KotlinLogging.logger {}
 
     fun getActivePostById(postId: UUID): CommunityPost {
-        // 캐시 우선 조회
-        val cachedPost = cacheService.getCachedPostWithAuthor(postId)
+        // Redis Hash에서 우선 조회
+        val cachedPost = redisCommunityServiceV2.getPost(postId)
         if (cachedPost != null) {
             logger.debug { "Cache hit for post: $postId" }
             return cachedPost.toCommunityPost()
@@ -40,144 +42,101 @@ class CommunityPostReadService(
         val post = communityPostRepository.findActivePostById(postId)
             .orElseThrow { IllegalArgumentException("Post not found or deleted: $postId") }
             
-        // 조회된 게시물은 개별적으로 캐시 (사용자 정보 없이)
-        // cacheService.cachePost(post) // CommunityPostWithAuthor가 필요하므로 여기서는 캐시하지 않음
-        logger.debug { "Retrieved post from DB: $postId" }
+        // 조회된 게시물을 Redis Hash에 저장
+        val postCache = post.toCommunityPostCache()
+        redisCommunityServiceV2.savePost(postCache)
+        
+        logger.debug { "Retrieved post from DB and cached: $postId" }
         
         return post
     }
     
     /**
-     * 사용자 정보와 함께 단일 게시물 조회
+     * 단일 게시물 조회 (gRPC로 사용자 정보 포함)
      */
     fun getActivePostWithAuthor(postId: UUID): CommunityPostWithAuthor {
         val post = getActivePostById(postId)
-        val author = userService.getUserProfile(post.userId)
-            ?: userService.createFallbackAuthorInfo(post.userId)
+        
+        // gRPC로 사용자 정보 조회
+        val author = userGrpcClient.getUserProfile(post.userId)
+            ?: userGrpcClient.createFallbackAuthorInfo(post.userId)
         
         val postWithAuthor = CommunityPostWithAuthor(
             post = post,
+            imageUrls = post.images.map { it.url },
             author = author
         )
-        
-        // 사용자 정보와 함께 캐시
-        cacheService.cachePost(postWithAuthor)
         
         return postWithAuthor
     }
 
     /**
-     * 최신 게시물 목록 조회 (캐시 + 로컬 프로젝션)
+     * 최신 게시물 목록 조회 (SortedSet + Hash 구조)
      */
     fun getActivePosts(pageable: Pageable): Page<CommunityPost> {
         val pageNumber = pageable.pageNumber + 1 // 0-based to 1-based
+        val pageSize = pageable.pageSize
         
-        // 캐시에서 게시물 ID 목록 조회
-        val cachedPostIds = cacheService.getLatestPostList(pageNumber)
-
-        return if (cachedPostIds != null) {
-            getFromCache(cachedPostIds, pageable, pageNumber)
-        } else {
-            getFromDbAndWarmCache(pageable, pageNumber)
+        // SortedSet에서 게시물 ID 목록 조회
+        val postIds = redisCommunityServiceV2.getLatestPosts(pageNumber, pageSize)
+        
+        if (postIds.isNotEmpty()) {
+            // Hash에서 게시물 상세 정보 조회
+            val posts = postIds.mapNotNull { postId ->
+                redisCommunityServiceV2.getPost(postId)?.toCommunityPost()
+            }
+            
+            if (posts.isNotEmpty()) {
+                val totalElements = redisCommunityServiceV2.getTotalPostCount()
+                logger.debug { "Cache hit for post list page: $pageNumber, found ${posts.size} posts" }
+                return PageImpl(posts, pageable, totalElements)
+            }
         }
+        
+        // 캐시 미스 시 DB에서 조회하고 캐시에 저장
+        return getFromDbAndWarmCache(pageable)
     }
 
-    private fun getFromCache(
-        cachedIds: List<UUID>,
-        pageable: Pageable,
-        pageNumber: Int
-    ): Page<CommunityPost> {
-        logger.debug { "Cache hit for post list page: $pageNumber" }
+    private fun getFromDbAndWarmCache(pageable: Pageable): Page<CommunityPost> {
+        logger.debug { "Cache miss for post list, querying DB" }
 
-        // 캐시에서 게시물 내용 조회 (MGET)
-        val cachedPosts = cacheService.getPosts(cachedIds)
-
-        // 캐시 미스 게시물들 DB에서 조회
-        val missingIds = cachedIds.filterNot { cachedPosts.containsKey(it) }
-        val missingPosts = if (missingIds.isNotEmpty()) {
-            val dbPosts = communityPostRepository.findActivePostsByIds(missingIds)
-            // 누락된 게시물들 캐시에 저장
-            cacheService.cachePosts(dbPosts)
-            logger.debug { "Cached ${dbPosts.size} missing posts from DB" }
-            dbPosts.associateBy { it.id }
-        } else emptyMap()
-
-        // 결과 조합
-        val allPosts = cachedPosts + missingPosts
-        val orderedPosts = cachedIds.mapNotNull { allPosts[it] }
-
-        // 전체 엘리먼트 수 조회
-        val totalElements = communityPostRepository.countActivePosts()
-
-        return PageImpl(orderedPosts, pageable, totalElements)
-    }
-
-    private fun getFromDbAndWarmCache(
-        pageable: Pageable,
-        pageNumber: Int
-    ): Page<CommunityPost> {
-        logger.debug { "Cache miss for post list page: $pageNumber, querying DB" }
-
-        // 캐시 미스 시 DB 조회
+        // DB에서 조회
         val dbResult = communityPostRepository.findActivePosts(pageable)
 
-        // 게시물 ID 목록 캐시에 저장
-        val postIds = dbResult.content.map { it.id }
-        cacheService.cacheLatestPosts(pageNumber, postIds)
+        // 각 게시물을 Redis에 저장 (Hash + SortedSet)
+        dbResult.content.forEach { post ->
+            val postCache = post.toCommunityPostCache()
+            redisCommunityServiceV2.savePost(postCache)
+        }
 
-        // 게시물 내용들도 캐시에 저장
-        cacheService.cachePosts(dbResult.content)
-
-        logger.debug { "Cached post list page: $pageNumber and ${dbResult.content.size} posts" }
+        logger.debug { "Cached ${dbResult.content.size} posts to Redis" }
 
         return dbResult
     }
     
     /**
-     * 사용자 정보와 함께 최신 게시물 목록 조회 (로컬 프로젝션)
-     * 외부 서비스 호출 없이 안정적인 응답 보장
+     * 최신 게시물 목록 조회 (gRPC로 사용자 정보 포함)
      */
-    fun getActivePostsWithAuthors(userId: UUID, pageable: Pageable): Page<CommunityPostWithAuthor> {
-        // 1. 게시물 목록 조회 (캐시 우선)
+    fun getActivePostsWithAuthors(pageable: Pageable): Page<CommunityPostWithAuthor> {
         val postsPage = getActivePosts(pageable)
         
         if (postsPage.content.isEmpty()) {
             return PageImpl(emptyList(), pageable, 0)
         }
         
-        // 2. 사용자 ID 추출
+        // 사용자 ID들 추출하여 gRPC 배치 조회
         val userIds = postsPage.content.map { it.userId }.distinct()
+        val userProfiles = userGrpcClient.getUserProfiles(userIds)
         
-        // 3. 로컬 프로젝션에서 사용자 정보 배치 조회
-        val userProfiles = userService.getUserProfiles(userIds)
+        logger.debug { "Retrieved ${userProfiles.size} user profiles via gRPC for ${postsPage.content.size} posts" }
         
-        logger.debug { "Retrieved ${userProfiles.size} user profiles from local projection for ${postsPage.content.size} posts" }
-        
-        // 4. 게시물 이미지 정보 배치 조회 (캐시에서 온 데이터는 lazy loading이 안될 수 있음)
-        val postIds = postsPage.content.map { it.id }
-        val postImages = if (postIds.isNotEmpty()) {
-            // 더 효율적인 쿼리 - IN 절 사용
-            postIds.flatMap { postId ->
-                communityPostImageRepository.findByPostIdOrderByCreatedAtAsc(postId)
-                    .map { postId to it }
-            }.groupBy({ it.first }, { it.second })
-        } else emptyMap()
-        
-        // 5. 결과 조합 (이미지 포함)
         val postsWithAuthors = postsPage.content.map { post ->
             val author = userProfiles[post.userId] 
-                ?: userService.createFallbackAuthorInfo(post.userId)
-            
-            // 게시물 이미지 정보 - JPA 엔티티의 경우 images 필드에 직접 접근
-            // 만약 lazy loading이 제대로 작동하지 않는다면 명시적으로 조회한 이미지 사용
-            val images = try {
-                post.images // lazy loading 시도
-            } catch (e: Exception) {
-                postImages[post.id] ?: emptyList() // fallback to explicit query
-            }
+                ?: userGrpcClient.createFallbackAuthorInfo(post.userId)
             
             CommunityPostWithAuthor(
                 post = post,
+                imageUrls = post.images.map { it.url },
                 author = author
             )
         }
@@ -186,18 +145,20 @@ class CommunityPostReadService(
     }
 
     fun getPopularPosts(pageable: Pageable): Page<CommunityPost> {
-        // 인기 게시물은 모든 사용자가 공통으로 조회하므로 캐시 효과가 높음
-        // TODO: popular:posts:p{page} 키로 목록 자체도 캐시 적용 고려
+        // 인기 게시물은 DB에서 조회 (SortedSet은 최신순 전용)
         val result = communityPostRepository.findPopularPosts(pageable)
         
-        // 개별 게시물을 전역 캐시에 저장
-        cacheService.cachePosts(result.content)
+        // 개별 게시물을 Redis에 저장
+        result.content.forEach { post ->
+            val postCache = post.toCommunityPostCache()
+            redisCommunityServiceV2.savePost(postCache)
+        }
         
         return result
     }
     
     /**
-     * 사용자 정보와 함께 인기 게시물 목록 조회
+     * 인기 게시물 목록 조회 (gRPC로 사용자 정보 포함)
      */
     fun getPopularPostsWithAuthors(pageable: Pageable): Page<CommunityPostWithAuthor> {
         val postsPage = getPopularPosts(pageable)
@@ -206,15 +167,17 @@ class CommunityPostReadService(
             return PageImpl(emptyList(), pageable, 0)
         }
         
+        // 사용자 ID들 추출하여 gRPC 배치 조회
         val userIds = postsPage.content.map { it.userId }.distinct()
-        val userProfiles = userService.getUserProfiles(userIds)
+        val userProfiles = userGrpcClient.getUserProfiles(userIds)
         
         val postsWithAuthors = postsPage.content.map { post ->
             val author = userProfiles[post.userId] 
-                ?: userService.createFallbackAuthorInfo(post.userId)
+                ?: userGrpcClient.createFallbackAuthorInfo(post.userId)
             
             CommunityPostWithAuthor(
                 post = post,
+                imageUrls = post.images.map { it.url },
                 author = author
             )
         }
@@ -223,7 +186,7 @@ class CommunityPostReadService(
     }
     
     /**
-     * 사용자 정보와 함께 특정 사용자의 게시물 목록 조회
+     * 특정 사용자의 게시물 목록 조회 (gRPC로 사용자 정보 포함)
      */
     fun getUserPostsWithAuthor(userId: UUID, pageable: Pageable): Page<CommunityPostWithAuthor> {
         val postsPage = communityPostRepository.findActivePostsByUserId(userId, pageable)
@@ -233,12 +196,13 @@ class CommunityPostReadService(
         }
         
         // 동일 사용자이므로 한 번만 조회
-        val userProfile = userService.getUserProfile(userId)
-            ?: userService.createFallbackAuthorInfo(userId)
+        val userProfile = userGrpcClient.getUserProfile(userId)
+            ?: userGrpcClient.createFallbackAuthorInfo(userId)
         
         val postsWithAuthors = postsPage.content.map { post ->
             CommunityPostWithAuthor(
                 post = post,
+                imageUrls = post.images.map { it.url },
                 author = userProfile
             )
         }
@@ -248,5 +212,106 @@ class CommunityPostReadService(
 
     fun getUserPostCount(userId: UUID): Long {
         return communityPostRepository.countActivePostsByUserId(userId)
+    }
+    
+    /**
+     * 커서 기반 최신 게시물 목록 조회 (사용자 정보 포함)
+     */
+    fun getActivePostsWithAuthorsByCursor(request: CursorPageRequest): CursorPageResponse<CommunityPostWithAuthor> {
+        val cutoffTime = LocalDateTime.now().minusHours(24)
+        
+        val cursor = request.cursor?.let { PostCursor.decode(it) }
+        val limit = request.limit
+        
+        val posts = mutableListOf<CommunityPost>()
+        
+        // 1. 캐시에서 조회 (24시간 이내)
+        val lastScore = cursor?.createdAtEpochMs?.toDouble()?.div(1000) // milliseconds to seconds
+        val cachePostIds = redisCommunityServiceV2.getLatestPostsByCursor(lastScore, limit + 1) // +1로 hasNext 확인
+        
+        // 커서 기반 필터링 (동일한 timestamp인 경우 postId로 구분)
+        val filteredCachePostIds = if (cursor != null) {
+            cachePostIds.filter { postId ->
+                val post = redisCommunityServiceV2.getPost(postId)
+                if (post != null) {
+                    val postCreatedAtMs = post.createdAt.toEpochSecond(ZoneOffset.UTC) * 1000
+                    when {
+                        postCreatedAtMs < cursor.createdAtEpochMs -> true
+                        postCreatedAtMs == cursor.createdAtEpochMs -> postId.toString() < cursor.postId.toString()
+                        else -> false
+                    }
+                } else false
+            }
+        } else {
+            cachePostIds
+        }
+        
+        // 캐시에서 게시물 상세 정보 조회
+        val cachePosts = filteredCachePostIds.take(limit).mapNotNull { postId ->
+            redisCommunityServiceV2.getPost(postId)?.toCommunityPost()
+        }.filter { it.createdAt >= cutoffTime } // 24시간 컷오프 적용
+        
+        posts.addAll(cachePosts)
+        
+        // 2. 캐시에서 부족한 경우 DB에서 추가 조회
+        val remainingLimit = limit - posts.size
+        if (remainingLimit > 0) {
+            val dbPosts = getPostsFromDbWithCursor(cursor, cutoffTime, remainingLimit)
+            posts.addAll(dbPosts)
+        }
+        
+        // 3. 사용자 정보 조회 (캐시 우선)
+        val finalPosts = posts.take(limit)
+        val userIds = finalPosts.map { it.userId }.distinct()
+        val userProfiles = userGrpcClient.getUserProfiles(userIds)
+        
+        val postsWithAuthors = finalPosts.map { post ->
+            val author = userProfiles[post.userId] 
+                ?: userGrpcClient.createFallbackAuthorInfo(post.userId)
+            
+            CommunityPostWithAuthor(
+                post = post,
+                imageUrls = post.images.map { it.url },
+                author = author
+            )
+        }
+        
+        // 4. 다음 커서 생성
+        val hasNext = posts.size > limit || cachePostIds.size > limit
+        val nextCursor = if (hasNext && postsWithAuthors.isNotEmpty()) {
+            val lastPost = postsWithAuthors.last().post
+            PostCursor.fromPost(lastPost.createdAt, lastPost.id).encode()
+        } else null
+        
+        logger.debug { "Retrieved ${postsWithAuthors.size} posts with cursor (${cachePosts.size} from cache, ${posts.size - cachePosts.size} from DB)" }
+        
+        return CursorPageResponse.of(postsWithAuthors, nextCursor, hasNext)
+    }
+    
+    /**
+     * DB에서 커서 기반 게시물 조회 (24시간 이전 데이터용)
+     */
+    private fun getPostsFromDbWithCursor(cursor: PostCursor?, cutoffTime: LocalDateTime, limit: Int): List<CommunityPost> {
+        return try {
+            val posts = if (cursor != null) {
+                val cursorCreatedAt = LocalDateTime.ofEpochSecond(cursor.createdAtEpochMs / 1000, 0, ZoneOffset.UTC)
+                communityPostRepository.findActivePostsWithKeyset(cursorCreatedAt, cursor.postId, limit)
+            } else {
+                communityPostRepository.findActivePostsFromTime(cutoffTime, limit)
+            }
+            
+            // 조회된 게시물들을 캐시에 저장
+            posts.forEach { post ->
+                val postCache = post.toCommunityPostCache()
+                redisCommunityServiceV2.savePost(postCache)
+            }
+            
+            logger.debug { "Retrieved ${posts.size} posts from DB for cursor pagination" }
+            posts
+            
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to get posts from DB with cursor" }
+            emptyList()
+        }
     }
 }

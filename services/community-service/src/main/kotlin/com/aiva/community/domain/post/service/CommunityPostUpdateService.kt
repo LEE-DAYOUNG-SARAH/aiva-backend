@@ -1,7 +1,8 @@
 package com.aiva.community.domain.post.service
 
 import com.aiva.community.domain.post.dto.UpdatePostRequest
-import com.aiva.community.global.cache.CommunityPostCacheService
+import com.aiva.common.redis.service.RedisCommunityServiceV2
+import com.aiva.community.global.cache.toCommunityPostCache
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -11,7 +12,7 @@ import java.util.*
 class CommunityPostUpdateService(
     private val communityPostImageService: CommunityPostImageService,
     private val communityPostReadService: CommunityPostReadService,
-    private val cacheService: CommunityPostCacheService,
+    private val redisCommunityServiceV2: RedisCommunityServiceV2,
 ) {
 
     fun updatePost(postId: UUID, userId: UUID, request: UpdatePostRequest): UUID {
@@ -22,13 +23,9 @@ class CommunityPostUpdateService(
 
         communityPostImageService.update(postId, request.images)
         
-        // 캐시 전략: 게시물 수정 시
-        // 1. 수정된 게시물 캐시 갱신
-        cacheService.cachePost(postWithAuthor)
-        
-        // 2. 최신순 목록만 무효화 (인기순은 배치에서 처리)
-        // 수정은 좋아요/댑글수 영향 없으므로 최신순만 고려
-        cacheService.evictLatestPostPages(startPage = 1, endPage = 3)
+        // 캐시 전략: 게시물 수정 시 Redis Hash 업데이트
+        val updatedPostCache = postWithAuthor.post.toCommunityPostCache()
+        redisCommunityServiceV2.savePost(updatedPostCache)
         
         return postId
     }
@@ -39,56 +36,43 @@ class CommunityPostUpdateService(
 
         postWithAuthor.post.delete()
         
-        // 캐시 전략: 게시물 삭제 시
-        // 1. 해당 게시물 캐시 삭제
-        cacheService.evictPost(postId)
-        
-        // 2. 최신순 목록에서 제거 (인기순은 배치에서 처리)
-        cacheService.evictLatestPostPages(startPage = 1, endPage = 5)
-        
-        // 3. 최신순 버전 증가로 무효화 감지
-        cacheService.incrementLatestListVersion()
+        // 캐시 전략: 게시물 삭제 시 Redis에서 제거
+        redisCommunityServiceV2.deletePost(postId)
 
         return postWithAuthor.post.id
     }
 
     fun incrementLikeCount(postId: UUID) {
-        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
-        postWithAuthor.post.incrementLikeCount()
+        val post = communityPostReadService.getActivePostById(postId)
+        post.incrementLikeCount()
         
-        // 좋아요 수 변경 시 개별 게시물만 갱신
-        cacheService.cachePost(postWithAuthor)
-        
-        // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
+        // Redis에서 좋아요 수 증가
+        redisCommunityServiceV2.incrementLikeCount(postId)
     }
 
     fun decrementLikeCount(postId: UUID) {
-        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
-        postWithAuthor.post.decrementLikeCount()
+        val post = communityPostReadService.getActivePostById(postId)
+        post.decrementLikeCount()
         
-        // 좋아요 수 변경 시 개별 게시물만 갱신
-        cacheService.cachePost(postWithAuthor)
-        
-        // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
+        // Redis에서 좋아요 수 감소
+        redisCommunityServiceV2.decrementLikeCount(postId)
     }
 
     fun incrementCommentCount(postId: UUID) {
-        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
-        postWithAuthor.post.incrementCommentCount()
+        val post = communityPostReadService.getActivePostById(postId)
+        post.incrementCommentCount()
         
-        // 댓글 수 변경 시 개별 게시물만 갱신
-        cacheService.cachePost(postWithAuthor)
-        
-        // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
+        // Redis Hash에서 댓글 수 업데이트 (직접 Hash 필드 증가는 RedisCommunityServiceV2에 메서드 추가 필요)
+        val updatedPostCache = post.toCommunityPostCache()
+        redisCommunityServiceV2.savePost(updatedPostCache)
     }
 
     fun decrementCommentCount(postId: UUID) {
-        val postWithAuthor = communityPostReadService.getActivePostWithAuthor(postId)
-        postWithAuthor.post.decrementCommentCount()
+        val post = communityPostReadService.getActivePostById(postId)
+        post.decrementCommentCount()
         
-        // 댓글 수 변경 시 개별 게시물만 갱신
-        cacheService.cachePost(postWithAuthor)
-        
-        // 인기순에는 영향을 주지만 배치에서 처리하므로 즉시 무효화하지 않음
+        // Redis Hash에서 댓글 수 업데이트
+        val updatedPostCache = post.toCommunityPostCache()
+        redisCommunityServiceV2.savePost(updatedPostCache)
     }
 }
