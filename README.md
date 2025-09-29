@@ -22,8 +22,9 @@ AIVA는 부모를 위한 **AI 육아 비서**입니다.
 
 ### 인프라 구성
 - **Database**: MySQL (각 서비스별 독립 DB)
-- **Cache**: Redis (캐싱 및 세션 관리)
+- **Cache**: Redis (캐싱, 세션 관리, 커뮤니티 게시물 캐시)
 - **Message Queue**: Kafka (알림 처리)
+- **Service Communication**: gRPC (서비스 간 통신)
 - **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
 
@@ -41,7 +42,8 @@ aiva-backend/
 │   └── gateway/                 # API Gateway
 ├── shared/                   # 공통 모듈
 │   ├── common/                  # 공통 라이브러리 (Redis, 로깅, WebClient)
-│   └── security/                # JWT, 보안 유틸리티
+│   ├── security/                # JWT, 보안 유틸리티
+│   └── proto/                   # gRPC Protocol Buffers
 ├── scripts/                  # 개발/배포 스크립트
 ```
 
@@ -50,9 +52,10 @@ aiva-backend/
 - **Backend**: Kotlin + Spring Boot 3
 - **Database**: MySQL 8.0
 - **ORM**: Spring Data JPA
-- **Cache**: Redis
+- **Cache**: Redis (with Spring Data Redis)
 - **Object Storage**: AWS S3
-- **Message Queue**: Kakfa
+- **Message Queue**: Kafka
+- **Service Communication**: gRPC
 - **Container**: Docker
 - **API Gateway**: Spring Cloud Gateway
 
@@ -226,8 +229,11 @@ cd services/user-service
 ## 📈 성능 최적화
 
 ### 캐싱 전략
+- **Redis Hash**: 게시물 상세 정보 캐싱 (24시간 TTL)
+- **Redis SortedSet**: 최신 게시물 목록 관리
+- **Spring Data Redis**: @RedisHash 엔티티 활용
+- **커서 기반 페이지네이션**: 효율적인 대용량 데이터 처리
 - Redis를 통한 세션 관리
-- 자주 조회되는 데이터 캐싱
 - JPA 2차 캐시 활용
 
 ### 데이터베이스 최적화
