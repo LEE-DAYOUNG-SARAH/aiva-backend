@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option java_package = "com.aiva.proto.user";
+option java_outer_classname = "UserProto";
+option java_multiple_files = true;
+
+package user;
+
+// 사용자 서비스 정의
+service UserService {
+  // 단일 사용자 정보 조회
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+  
+  // 여러 사용자 정보 배치 조회
+  rpc GetUserProfiles(GetUserProfilesRequest) returns (GetUserProfilesResponse);
+}
+
+// 단일 사용자 조회 요청
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+// 단일 사용자 조회 응답
+message GetUserProfileResponse {
+  UserProfile user_profile = 1;
+}
+
+// 배치 사용자 조회 요청
+message GetUserProfilesRequest {
+  repeated string user_ids = 1;
+}
+
+// 배치 사용자 조회 응답
+message GetUserProfilesResponse {
+  repeated UserProfile user_profiles = 1;
+}
+
+// 사용자 프로필 정보
+message UserProfile {
+  string user_id = 1;
+  string nickname = 2;
+  optional string profile_image_url = 3;
+  optional string email = 4;
+}

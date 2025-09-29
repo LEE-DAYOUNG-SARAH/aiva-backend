@@ -8,5 +8,6 @@ include(
     "services:subscription-service",
     "infrastructure:gateway",
     "shared:common",
-    "shared:security"
+    "shared:security",
+    "shared:proto"
 )
