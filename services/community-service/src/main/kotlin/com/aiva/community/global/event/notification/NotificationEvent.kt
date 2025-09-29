@@ -15,7 +15,7 @@ import java.util.*
  */
 data class NotificationEvent(
     @JsonProperty("eventId")
-    val eventId: String = UUID.randomUUID().toString(),
+    val eventId: String,
     
     @JsonProperty("eventType")
     val eventType: NotificationEventType,
@@ -50,6 +50,24 @@ data class NotificationEvent(
     
     companion object {
         const val TOPIC_NAME = "community.notification"
+        
+        /**
+         * 멱등키 생성 (자연키 형태)
+         * 형식: {eventType}:{targetUserId}:{actorUserId}:{resourceId}[:{parentResourceId}]
+         */
+        fun generateIdempotentKey(
+            eventType: NotificationEventType,
+            targetUserId: UUID,
+            actorUserId: UUID,
+            resourceId: UUID,
+            parentResourceId: UUID? = null
+        ): String {
+            return if (parentResourceId != null) {
+                "${eventType.name}:${targetUserId}:${actorUserId}:${resourceId}:${parentResourceId}"
+            } else {
+                "${eventType.name}:${targetUserId}:${actorUserId}:${resourceId}"
+            }
+        }
     }
 }
 
@@ -114,7 +132,17 @@ class NotificationEventBuilder {
         require(title.isNotBlank()) { "title cannot be blank" }
         require(content.isNotBlank()) { "content cannot be blank" }
         
+        // 멱등키 자동 생성
+        val idempotentKey = NotificationEvent.generateIdempotentKey(
+            eventType = eventType!!,
+            targetUserId = targetUserId!!,
+            actorUserId = actorUserId!!,
+            resourceId = resourceId!!,
+            parentResourceId = parentResourceId
+        )
+        
         return NotificationEvent(
+            eventId = idempotentKey,
             eventType = eventType!!,
             targetUserId = targetUserId!!,
             actorUserId = actorUserId!!,
