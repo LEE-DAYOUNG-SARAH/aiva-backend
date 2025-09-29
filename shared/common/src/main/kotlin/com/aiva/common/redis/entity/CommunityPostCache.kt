@@ -3,40 +3,26 @@ package com.aiva.common.redis.entity
 import org.springframework.data.annotation.Id
 import org.springframework.data.redis.core.RedisHash
 import org.springframework.data.redis.core.TimeToLive
-import org.springframework.data.redis.core.index.Indexed
 import java.time.LocalDateTime
 import java.util.*
 
+/**
+ * Redis Hash에 저장되는 커뮤니티 게시물 캐시 엔티티
+ * SortedSet과 함께 사용하여 최신글 목록 관리
+ */
 @RedisHash("community:post")
 data class CommunityPostCache(
     @Id
     val id: UUID,
-    
     val title: String,
-    
     val content: String,
-    
     val imageUrls: List<String> = emptyList(),
-    
     val likeCount: Int = 0,
-    
     val commentCount: Int = 0,
-    
     val createdAt: LocalDateTime,
-    
     val updatedAt: LocalDateTime,
-    
     val authorId: UUID,
     
-    val authorNickname: String,
-    
-    val authorProfileImageUrl: String? = null,
-    
     @TimeToLive
-    val ttl: Long = 60 * 60L // 1 hour in seconds
-) {
-    fun incrementLikeCount(): CommunityPostCache = copy(likeCount = likeCount + 1)
-    fun decrementLikeCount(): CommunityPostCache = copy(likeCount = maxOf(0, likeCount - 1))
-    fun incrementCommentCount(): CommunityPostCache = copy(commentCount = commentCount + 1)
-    fun decrementCommentCount(): CommunityPostCache = copy(commentCount = maxOf(0, commentCount - 1))
-}
+    val ttl: Long = 24 * 60 * 60L // 24시간
+)
