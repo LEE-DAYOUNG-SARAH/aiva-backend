@@ -10,9 +10,6 @@ object KafkaTopics {
     // 알림 관련 토픽
     const val COMMUNITY_NOTIFICATION = "community.notification"
     
-    // 사용자 프로필 관련 토픽
-    const val USER_PROFILE_CHANGED = "user.profile.changed"
-    
     // 커뮤니티 이벤트 관련 토픽
     const val COMMUNITY_POST_CREATED = "community.post.created"
     const val COMMUNITY_POST_UPDATED = "community.post.updated"

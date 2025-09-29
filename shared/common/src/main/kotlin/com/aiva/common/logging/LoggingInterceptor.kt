@@ -1,11 +1,11 @@
 package com.aiva.common.logging
 
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
 import java.util.*
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /**
  * HTTP 요청에 대한 로깅 컨텍스트를 자동으로 설정하는 인터셉터

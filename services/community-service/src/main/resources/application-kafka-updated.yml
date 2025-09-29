@@ -24,12 +24,6 @@ app:
         consumer-group: community-service-group
         partitions: 3
         replication-factor: 1
-      
-      user-profile-changed:
-        name: user.profile.changed
-        consumer-group: community-service-group
-        partitions: 3
-        replication-factor: 1
 
 # Spring Kafka 기본 설정 (호환성 유지용)
 spring:

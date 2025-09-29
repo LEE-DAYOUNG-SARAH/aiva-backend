@@ -22,7 +22,6 @@ spring:
 community:
   kafka:
     topics:
-      user-profile-changed: user.profile.changed
       notification: community.notification
     consumer:
       concurrency: 2

@@ -23,7 +23,7 @@ fun CommunityPostCache.toCommunityPost(): CommunityPost {
 /**
  * CommunityPost를 CommunityPostCache로 변환하는 extension 함수
  */
-fun CommunityPost.toCommunityPostCache(authorNickname: String = "Unknown", authorProfileImageUrl: String? = null): CommunityPostCache {
+fun CommunityPost.toCommunityPostCache(): CommunityPostCache {
     return CommunityPostCache(
         id = this.id,
         title = this.title,
@@ -33,27 +33,7 @@ fun CommunityPost.toCommunityPostCache(authorNickname: String = "Unknown", autho
         commentCount = this.commentCount,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
-        authorId = this.userId,
-        authorNickname = authorNickname,
-        authorProfileImageUrl = authorProfileImageUrl
+        authorId = this.userId
     )
 }
 
-/**
- * CommunityPostWithAuthor를 CommunityPostCache로 변환하는 extension 함수
- */
-fun CommunityPostWithAuthor.toCommunityPostCache(): CommunityPostCache {
-    return CommunityPostCache(
-        id = this.post.id,
-        title = this.post.title,
-        content = this.post.content,
-        imageUrls = this.post.images.map { it.url },
-        likeCount = this.post.likeCount,
-        commentCount = this.post.commentCount,
-        createdAt = this.post.createdAt,
-        updatedAt = this.post.updatedAt,
-        authorId = this.post.userId,
-        authorNickname = this.author.nickname,
-        authorProfileImageUrl = this.author.profileImageUrl
-    )
-}
