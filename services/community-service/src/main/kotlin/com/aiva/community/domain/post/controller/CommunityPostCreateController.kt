@@ -4,10 +4,7 @@ import com.aiva.common.response.ApiResponse
 import com.aiva.community.domain.post.dto.CreatePostRequest
 import com.aiva.community.domain.post.service.CommunityPostCreateService
 import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.security.Principal
 import java.util.*
 
@@ -20,12 +17,14 @@ class CommunityPostCreateController(
     @PostMapping
     fun createPost(
         @Valid @RequestBody request: CreatePostRequest,
-        principal: Principal
+        @RequestHeader("X-User-Id") userId: String,
+        @RequestHeader("X-User-Nickname") nickname: String,
+        @RequestHeader(value = "X-User-Profile-Url", required = false) profileUrl: String?
     ): ApiResponse<UUID> {
-        val userId = UUID.fromString(principal.name)
+        val userUuid = UUID.fromString(userId)
 
         return ApiResponse.success(
-            communityPostCreateService.createPost(userId, request)
+            communityPostCreateService.createPost(userUuid, nickname, profileUrl, request)
         )
     }
 }

@@ -21,7 +21,7 @@ data class CommentResponse(
     val id: UUID,
     val postId: UUID,
     val userId: UUID,
-    val userName: String? = null,
+    val userName: String,
     val userProfileImage: String? = null,
     val parentCommentId: UUID? = null,
     val content: String,
