@@ -39,8 +39,8 @@ class AuthService(
         // 2. Redis에 사용자 정보 캐시 (7일)
         authRedisService.setUserCache(user.id, user.email, user.nickname)
         
-        // 3. JWT 토큰 생성
-        val accessToken = jwtUtil.generateToken(user.id)
+        // 3. JWT 토큰 생성 (사용자 정보 포함)
+        val accessToken = jwtUtil.generateToken(user.id, user.nickname, user.avatarUrl)
         val refreshToken = jwtUtil.generateRefreshToken(user.id)
         
         // 4. 리프레시 토큰 Redis에 저장 (30일)
@@ -83,8 +83,8 @@ class AuthService(
         // 5. 로그인 시간 업데이트
         user.updateLastLogin()
         
-        // 6. 새 토큰 발급
-        val newAccessToken = jwtUtil.generateToken(user.id)
+        // 6. 새 토큰 발급 (사용자 정보 포함)
+        val newAccessToken = jwtUtil.generateToken(user.id, user.nickname, user.avatarUrl)
         val newRefreshToken = jwtUtil.generateRefreshToken(user.id)
         
         // 7. 새 리프레시 토큰 저장

@@ -50,11 +50,17 @@ class JwtAuthenticationFilter(
                 return@GatewayFilter handleUnauthorized(exchange, "로그아웃되었거나 유효하지 않은 토큰입니다")
             }
             
-            // 사용자 ID만 헤더에 추가
+            // 사용자 정보를 헤더에 추가
             val userId = jwtUtil.getUserIdFromToken(token)
+            val nickname = jwtUtil.getNicknameFromToken(token)
+            val profileUrl = jwtUtil.getProfileUrlFromToken(token)
             
             val modifiedRequest = request.mutate()
                 .header("X-User-Id", userId.toString())
+                .apply { 
+                    if (nickname != null) header("X-User-Nickname", nickname)
+                    if (profileUrl != null) header("X-User-Profile-Url", profileUrl)
+                }
                 .build()
             val modifiedExchange = exchange.mutate().request(modifiedRequest).build()
             

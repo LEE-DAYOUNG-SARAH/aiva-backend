@@ -24,19 +24,28 @@ class JwtUtil(
     private val key: SecretKey = Keys.hmacShaKeyFor(jwtSecret.toByteArray())
     
     /**
-     * JWT 토큰 생성 (UUID만 포함)
+     * JWT 토큰 생성 (사용자 정보 포함)
      */
-    fun generateToken(userId: UUID): String {
+    fun generateToken(userId: UUID, nickname: String, profileUrl: String?): String {
         val now = Date()
         val expiryDate = Date(now.time + jwtExpiration)
         
         return Jwts.builder()
             .subject(userId.toString())
             .claim("type", TokenType.ACCESS.name)
+            .claim("nickname", nickname)
+            .apply { if (profileUrl != null) claim("profileUrl", profileUrl) }
             .issuedAt(now)
             .expiration(expiryDate)
             .signWith(key)
             .compact()
+    }
+    
+    /**
+     * JWT 토큰 생성 (UUID만 포함) - 호환성을 위한 오버로드
+     */
+    fun generateToken(userId: UUID): String {
+        return generateToken(userId, "Unknown", null)
     }
     
     /**
@@ -61,6 +70,30 @@ class JwtUtil(
     fun getUserIdFromToken(token: String): UUID {
         val claims = getClaimsFromToken(token)
         return UUID.fromString(claims.subject)
+    }
+    
+    /**
+     * 토큰에서 닉네임 추출
+     */
+    fun getNicknameFromToken(token: String): String? {
+        return try {
+            val claims = getClaimsFromToken(token)
+            claims["nickname"] as String?
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    /**
+     * 토큰에서 프로필 URL 추출
+     */
+    fun getProfileUrlFromToken(token: String): String? {
+        return try {
+            val claims = getClaimsFromToken(token)
+            claims["profileUrl"] as String?
+        } catch (e: Exception) {
+            null
+        }
     }
     
     /**
