@@ -11,6 +11,8 @@ AIVA는 부모를 위한 **AI 육아 비서**입니다.
 ---
 
 ## 🏗️ 시스템 아키텍처
+<img width="500" height="350" alt="스크린샷 2025-09-24 오후 7 00 11" src="https://github.com/user-attachments/assets/6e5fcb22-bd19-4c75-baac-07b19729674d" />
+
 
 ### 서비스 구성
 - **[User Service](https://github.com/LEE-DAYOUNG-SARAH/aiva-backend/blob/main/services/user-service/README.md)**: 사용자 관리, 인증, 아이 정보 관리
